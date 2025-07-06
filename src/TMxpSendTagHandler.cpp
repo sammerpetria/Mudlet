@@ -26,6 +26,8 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleStartTag(TMxpContext& ctx, TMxpCl
     //    if (tag->hasAttr("EXPIRE") && tag->getAttr(0).isNamed("EXPIRE"))
     //        return MXP_TAG_NOT_HANDLED;
 
+    mLastCaption.clear();
+
     QString href = extractHref(tag);
     QString hint = extractHint(tag);
 
@@ -115,6 +117,9 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleEndTag(TMxpContext& ctx, TMxpClie
     if (mIsHrefInContent) {
         updateHrefInLinks(client);
     }
+
+    mLastCaption = mCurrentTagContent;
+    client.setCaptionForSendEvent(mLastCaption);
 
     resetCurrentTagContent(client);
     return MXP_TAG_HANDLED;

@@ -22,6 +22,7 @@
 #include "TMedia.h"
 #include "TConsole.h"
 #include "TLinkStore.h"
+#include <QStack>
 
 
 QString TMxpMudlet::getVersion()
@@ -93,6 +94,7 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
             enqueueMxpEvent(tag->asStartTag());
         } else if (tag->isNamed("SEND")) {
             enqueueMxpEvent(tag->asStartTag());
+            mSendEventIndices.push(mMxpEvents.size() - 1);
         }
     }
 
@@ -107,7 +109,18 @@ void TMxpMudlet::enqueueMxpEvent(MxpStartTag* tag)
         mxpEvent.attrs[attrName] = tag->getAttributeValue(attrName);
     }
     mxpEvent.actions = getLinkStore().getCurrentLinks();
+    mxpEvent.caption.clear();
     mMxpEvents.enqueue(mxpEvent);
+}
+
+void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
+{
+    if (!mSendEventIndices.isEmpty()) {
+        int idx = mSendEventIndices.pop();
+        if (idx >= 0 && idx < mMxpEvents.size()) {
+            mMxpEvents[idx].caption = caption;
+        }
+    }
 }
 
 TLinkStore& TMxpMudlet::getLinkStore()

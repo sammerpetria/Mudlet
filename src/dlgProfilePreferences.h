@@ -174,7 +174,7 @@ private slots:
     void slot_changeWrapAt();
     void slot_deleteMap();
     void slot_changeLargeAreaExitArrows(const bool);
-    void slot_changeUnderlineHyperlinks(const bool);
+    void slot_changeHyperlinkStyle(const int);
     void slot_hidePasswordMigrationLabel();
     void slot_loadHistoryMap();
 

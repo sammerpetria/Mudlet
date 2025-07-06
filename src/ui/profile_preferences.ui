@@ -297,13 +297,27 @@
            </widget>
           </item>
           <item row="3" column="0" colspan="2">
-           <widget class="QCheckBox" name="checkBox_underlineHyperlinks">
-            <property name="text">
-             <string>Underline hyperlinks in the main display</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
+           <widget class="QComboBox" name="comboBox_hyperlinkStyle">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Underline</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bold</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Italic</string>
+             </property>
+            </item>
            </widget>
           </item>
         </layout>

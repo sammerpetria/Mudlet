@@ -882,6 +882,8 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
         comboBox_hyperlinkStyle->setCurrentIndex(3);
         break;
     }
+
+    updateHyperlinkExample();
     //encoding->setCurrentIndex( pHost->mEncoding );
     mFORCE_SAVE_ON_EXIT->setChecked(pHost->mFORCE_SAVE_ON_EXIT);
 
@@ -1456,6 +1458,7 @@ void dlgProfilePreferences::clearHostDetails()
     mFORCE_GA_OFF->setChecked(false);
     mAlertOnNewData->setChecked(false);
     comboBox_hyperlinkStyle->setCurrentIndex(1);
+    updateHyperlinkExample();
     mFORCE_SAVE_ON_EXIT->setChecked(false);
 
     pushButton_chooseProfiles->setEnabled(false);
@@ -1604,7 +1607,10 @@ void dlgProfilePreferences::setColors()
         setButtonColor(pushButton_lMagenta, pHost->mLightMagenta);
         setButtonColor(pushButton_white, pHost->mWhite);
         setButtonColor(pushButton_lWhite, pHost->mLightWhite);
-        setButtonColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
+
+        // allow transparency so users can pick the "None" option
+        setButtonColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor, true);
+        updateHyperlinkExample();
     } else {
         pushButton_foreground_color->setStyleSheet(QString());
         pushButton_background_color->setStyleSheet(QString());
@@ -1742,6 +1748,7 @@ void dlgProfilePreferences::slot_resetColors()
     pHost->mHyperlinkFgColor = QColorConstants::Transparent;
 
     setColors();
+    updateHyperlinkExample();
     if (pHost->mpConsole) {
         pHost->mpConsole->resetConsoleBackgroundImage();
         pHost->mpConsole->changeColors();
@@ -1916,7 +1923,9 @@ void dlgProfilePreferences::slot_setHyperlinkFgColor()
 {
     Host* pHost = mpHost;
     if (pHost) {
-        setButtonAndProfileColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
+        // allow alpha so "Transparent" can be selected
+        setButtonAndProfileColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor, true);
+        updateHyperlinkExample();
     }
 }
 
@@ -1931,6 +1940,42 @@ void dlgProfilePreferences::slot_setFontSize()
     }
 
     pHost->mTelnet.sendInfoNewEnvironValue(qsl("FONT_SIZE"));
+}
+
+void dlgProfilePreferences::updateHyperlinkExample()
+{
+    Host* pHost = mpHost;
+    if (!pHost) {
+        label_hyperlinkExample->setStyleSheet(QString());
+        QFont font;
+        label_hyperlinkExample->setFont(font);
+        return;
+    }
+
+    QString styleSheet;
+    if (pHost->mHyperlinkFgColor != QColorConstants::Transparent) {
+        styleSheet = qsl("color: %1;").arg(pHost->mHyperlinkFgColor.name(QColor::HexArgb));
+    }
+    label_hyperlinkExample->setStyleSheet(styleSheet);
+
+    QFont font = label_hyperlinkExample->font();
+    font.setUnderline(false);
+    font.setBold(false);
+    font.setItalic(false);
+    switch (pHost->getHyperlinkStyle()) {
+    case Host::HyperlinkStyle::Underline:
+        font.setUnderline(true);
+        break;
+    case Host::HyperlinkStyle::Bold:
+        font.setBold(true);
+        break;
+    case Host::HyperlinkStyle::Italic:
+        font.setItalic(true);
+        break;
+    default:
+        break;
+    }
+    label_hyperlinkExample->setFont(font);
 }
 
 void dlgProfilePreferences::slot_setDisplayFont()
@@ -4609,4 +4654,5 @@ void dlgProfilePreferences::slot_changeHyperlinkStyle(const int index)
     }
 
     pHost->setHyperlinkStyle(static_cast<Host::HyperlinkStyle>(index));
+    updateHyperlinkExample();
 }

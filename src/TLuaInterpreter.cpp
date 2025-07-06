@@ -1600,6 +1600,72 @@ int TLuaInterpreter::enableHyperlinkUnderline(lua_State* L)
     return 0;
 }
 
+int TLuaInterpreter::setHyperlinkStyle(lua_State* L)
+{
+    const QString value = getVerifiedString(L, __func__, 1, "style").toLower();
+    Host& host = getHostFromLua(L);
+    if (value == qsl("none")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::None);
+    } else if (value == qsl("underline")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+    } else if (value == qsl("bold")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+    } else if (value == qsl("italic")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+    } else {
+        return luaL_error(L, "invalid hyperlink style");
+    }
+    return 0;
+}
+
+int TLuaInterpreter::getHyperlinkStyle(lua_State* L)
+{
+    Host& host = getHostFromLua(L);
+    switch (host.getHyperlinkStyle()) {
+    case Host::HyperlinkStyle::None:
+        lua_pushstring(L, "none");
+        break;
+    case Host::HyperlinkStyle::Underline:
+        lua_pushstring(L, "underline");
+        break;
+    case Host::HyperlinkStyle::Bold:
+        lua_pushstring(L, "bold");
+        break;
+    case Host::HyperlinkStyle::Italic:
+        lua_pushstring(L, "italic");
+        break;
+    }
+    return 1;
+}
+
+int TLuaInterpreter::setHyperlinkColor(lua_State* L)
+{
+    const QString value = getVerifiedString(L, __func__, 1, "color");
+    Host& host = getHostFromLua(L);
+    if (value.trimmed().isEmpty() || value.compare(qsl("none"), Qt::CaseInsensitive) == 0) {
+        host.setHyperlinkColor(QColorConstants::Transparent);
+        return 0;
+    }
+
+    QColor c(value);
+    if (!c.isValid()) {
+        return luaL_error(L, "invalid color string");
+    }
+    host.setHyperlinkColor(c);
+    return 0;
+}
+
+int TLuaInterpreter::getHyperlinkColor(lua_State* L)
+{
+    Host& host = getHostFromLua(L);
+    if (host.getHyperlinkColor() == QColorConstants::Transparent) {
+        lua_pushstring(L, "none");
+    } else {
+        lua_pushstring(L, host.getHyperlinkColor().name(QColor::HexArgb).toUtf8().constData());
+    }
+    return 1;
+}
+
 // No documentation available in wiki - internal function used by printError in DebugTools.lua
 int TLuaInterpreter::errorc(lua_State* L)
 {
@@ -5252,6 +5318,10 @@ void TLuaInterpreter::initLuaGlobals()
     lua_register(pGlobalLua, "enableCommandLine", TLuaInterpreter::enableCommandLine);
     lua_register(pGlobalLua, "disableCommandLine", TLuaInterpreter::disableCommandLine);
     lua_register(pGlobalLua, "enableHyperlinkUnderline", TLuaInterpreter::enableHyperlinkUnderline);
+    lua_register(pGlobalLua, "setHyperlinkStyle", TLuaInterpreter::setHyperlinkStyle);
+    lua_register(pGlobalLua, "getHyperlinkStyle", TLuaInterpreter::getHyperlinkStyle);
+    lua_register(pGlobalLua, "setHyperlinkColor", TLuaInterpreter::setHyperlinkColor);
+    lua_register(pGlobalLua, "getHyperlinkColor", TLuaInterpreter::getHyperlinkColor);
     lua_register(pGlobalLua, "startLogging", TLuaInterpreter::startLogging);
     lua_register(pGlobalLua, "appendLog", TLuaInterpreter::appendLog);
     lua_register(pGlobalLua, "calcFontSize", TLuaInterpreter::calcFontSize);
@@ -7514,6 +7584,24 @@ int TLuaInterpreter::setConfig(lua_State * L)
 
         return success();
     }
+    if (key == qsl("hyperlinkColor")) {
+        const QString value = getVerifiedString(L, __func__, 2, "value");
+        if (value.trimmed().isEmpty() || value.compare(qsl("none"), Qt::CaseInsensitive) == 0) {
+            host.setHyperlinkColor(QColorConstants::Transparent);
+            return success();
+        }
+
+        QColor color(value);
+        if (!color.isValid()) {
+            lua_pushnil(L);
+            lua_pushfstring(L, "invalid color string '%s'", lua_tostring(L, 2));
+            return 2;
+        }
+
+        host.setHyperlinkColor(color);
+        return success();
+    }
+
     if (key == qsl("underlineHyperlinks")) {
         const bool value = getVerifiedBool(L, __func__, 2, "value");
         host.setUnderlineHyperlinks(value);
@@ -7677,6 +7765,13 @@ int TLuaInterpreter::getConfig(lua_State *L)
             case Host::HyperlinkStyle::Italic:
                 lua_pushstring(L, "italic");
                 break;
+            }
+        } },
+        { qsl("hyperlinkColor"), [&](){
+            if (host.getHyperlinkColor() == QColorConstants::Transparent) {
+                lua_pushstring(L, "none");
+            } else {
+                lua_pushstring(L, host.getHyperlinkColor().name(QColor::HexArgb).toUtf8().constData());
             }
         } },
         { qsl("underlineHyperlinks"), [&](){ lua_pushboolean(L, host.getUnderlineHyperlinks()); } },

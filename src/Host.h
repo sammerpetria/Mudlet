@@ -226,6 +226,9 @@ public:
     HyperlinkStyle  getHyperlinkStyle() const { return mHyperlinkStyle; }
     void            setHyperlinkStyle(HyperlinkStyle style);
 
+    QColor          getHyperlinkColor() const { return mHyperlinkFgColor; }
+    void            setHyperlinkColor(const QColor& color) { mHyperlinkFgColor = color; }
+
     // compatibility wrappers
     bool            getUnderlineHyperlinks() const { return mHyperlinkStyle == HyperlinkStyle::Underline; }
     void            setUnderlineHyperlinks(bool state) { mHyperlinkStyle = state ? HyperlinkStyle::Underline : HyperlinkStyle::None; }

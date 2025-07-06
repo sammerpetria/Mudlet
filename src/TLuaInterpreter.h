@@ -498,6 +498,10 @@ public:
     static int enableCommandLine(lua_State*);
     static int disableCommandLine(lua_State*);
     static int enableHyperlinkUnderline(lua_State*);
+    static int setHyperlinkStyle(lua_State*);
+    static int getHyperlinkStyle(lua_State*);
+    static int setHyperlinkColor(lua_State*);
+    static int getHyperlinkColor(lua_State*);
     static int enableClickthrough(lua_State*);
     static int disableClickthrough(lua_State*);
     static int startLogging(lua_State*);

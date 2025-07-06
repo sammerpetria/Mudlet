@@ -86,6 +86,7 @@ public slots:
     void slot_setCommandFgColor();
     void slot_resetColors();
     void slot_setHyperlinkFgColor();
+    void updateHyperlinkExample();
 
     // Mapper colors.
     void slot_setMapColorBlack();

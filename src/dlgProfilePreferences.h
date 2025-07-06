@@ -85,6 +85,8 @@ public slots:
     void slot_setCommandBgColor();
     void slot_setCommandFgColor();
     void slot_resetColors();
+    void slot_setHyperlinkFgColor();
+    void slot_setHyperlinkBgColor();
 
     // Mapper colors.
     void slot_setMapColorBlack();
@@ -174,7 +176,7 @@ private slots:
     void slot_changeWrapAt();
     void slot_deleteMap();
     void slot_changeLargeAreaExitArrows(const bool);
-    void slot_changeUnderlineHyperlinks(const bool);
+    void slot_changeHyperlinkStyle(const int);
     void slot_hidePasswordMigrationLabel();
     void slot_loadHistoryMap();
 

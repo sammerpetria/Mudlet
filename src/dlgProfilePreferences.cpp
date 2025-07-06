@@ -384,7 +384,7 @@ void dlgProfilePreferences::disableHostDetails()
 
     // ----- groupBox_miscellaneous -----
     mAlertOnNewData->setEnabled(false);
-    checkBox_underlineHyperlinks->setEnabled(false);
+    comboBox_hyperlinkStyle->setEnabled(false);
     acceptServerGUI->setEnabled(false);
     mFORCE_SAVE_ON_EXIT->setEnabled(false);
     acceptServerMedia->setEnabled(false);
@@ -518,7 +518,7 @@ void dlgProfilePreferences::enableHostDetails()
 
     // ----- groupBox_miscellaneous -----
     mAlertOnNewData->setEnabled(true);
-    checkBox_underlineHyperlinks->setEnabled(true);
+    comboBox_hyperlinkStyle->setEnabled(true);
     acceptServerGUI->setEnabled(true);
     mFORCE_SAVE_ON_EXIT->setEnabled(true);
     acceptServerMedia->setEnabled(true);
@@ -868,7 +868,20 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     mFORCE_MCCP_OFF->setChecked(pHost->mFORCE_NO_COMPRESSION);
     mFORCE_GA_OFF->setChecked(pHost->mFORCE_GA_OFF);
     mAlertOnNewData->setChecked(pHost->mAlertOnNewData);
-    checkBox_underlineHyperlinks->setChecked(pHost->getUnderlineHyperlinks());
+    switch (pHost->getHyperlinkStyle()) {
+    case Host::HyperlinkStyle::None:
+        comboBox_hyperlinkStyle->setCurrentIndex(0);
+        break;
+    case Host::HyperlinkStyle::Underline:
+        comboBox_hyperlinkStyle->setCurrentIndex(1);
+        break;
+    case Host::HyperlinkStyle::Bold:
+        comboBox_hyperlinkStyle->setCurrentIndex(2);
+        break;
+    case Host::HyperlinkStyle::Italic:
+        comboBox_hyperlinkStyle->setCurrentIndex(3);
+        break;
+    }
     //encoding->setCurrentIndex( pHost->mEncoding );
     mFORCE_SAVE_ON_EXIT->setChecked(pHost->mFORCE_SAVE_ON_EXIT);
 
@@ -1202,6 +1215,8 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     connect(pushButton_background_color, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setBgColor);
     connect(pushButton_command_foreground_color, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setCommandFgColor);
     connect(pushButton_command_background_color, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setCommandBgColor);
+    connect(pushButton_hyperlinkFgColor, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setHyperlinkFgColor);
+    connect(pushButton_hyperlinkBgColor, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setHyperlinkBgColor);
 
     connect(pushButton_resetColors, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_resetColors);
     connect(reset_colors_button_2, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_resetMapColors);
@@ -1253,7 +1268,7 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     connect(mIsToLogInHtml, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_changeLogFileAsHtml);
     connect(doubleSpinBox_networkPacketTimeout, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &dlgProfilePreferences::slot_setPostingTimeout);
     connect(checkBox_largeAreaExitArrows, &QCheckBox::toggled, this, &dlgProfilePreferences::slot_changeLargeAreaExitArrows);
-    connect(checkBox_underlineHyperlinks, &QCheckBox::toggled, this, &dlgProfilePreferences::slot_changeUnderlineHyperlinks);
+    connect(comboBox_hyperlinkStyle, qOverload<int>(&QComboBox::currentIndexChanged), this, &dlgProfilePreferences::slot_changeHyperlinkStyle);
 
     //Shortcuts tab
     auto shortcutKeys = mudlet::self()->mpShortcutsManager->iterator();
@@ -1304,6 +1319,8 @@ void dlgProfilePreferences::disconnectHostRelatedControls()
     disconnect(pushButton_command_line_background_color, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_command_foreground_color, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_command_background_color, &QAbstractButton::clicked, nullptr, nullptr);
+    disconnect(pushButton_hyperlinkFgColor, &QAbstractButton::clicked, nullptr, nullptr);
+    disconnect(pushButton_hyperlinkBgColor, &QAbstractButton::clicked, nullptr, nullptr);
 
     disconnect(pushButton_black, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_lBlack, &QAbstractButton::clicked, nullptr, nullptr);
@@ -1379,7 +1396,7 @@ void dlgProfilePreferences::disconnectHostRelatedControls()
     disconnect(spinBox_playerRoomOuterDiameter, qOverload<int>(&QSpinBox::valueChanged), nullptr, nullptr);
     disconnect(spinBox_playerRoomInnerDiameter, qOverload<int>(&QSpinBox::valueChanged), nullptr, nullptr);
     disconnect(checkBox_largeAreaExitArrows, &QCheckBox::toggled, nullptr, nullptr);
-    disconnect(checkBox_underlineHyperlinks, &QCheckBox::toggled, nullptr, nullptr);
+    disconnect(comboBox_hyperlinkStyle, &QComboBox::currentIndexChanged, nullptr, nullptr);
 }
 
 void dlgProfilePreferences::clearHostDetails()
@@ -1440,7 +1457,7 @@ void dlgProfilePreferences::clearHostDetails()
     mFORCE_MCCP_OFF->setChecked(false);
     mFORCE_GA_OFF->setChecked(false);
     mAlertOnNewData->setChecked(false);
-    checkBox_underlineHyperlinks->setChecked(true);
+    comboBox_hyperlinkStyle->setCurrentIndex(1);
     mFORCE_SAVE_ON_EXIT->setChecked(false);
 
     pushButton_chooseProfiles->setEnabled(false);
@@ -1589,6 +1606,8 @@ void dlgProfilePreferences::setColors()
         setButtonColor(pushButton_lMagenta, pHost->mLightMagenta);
         setButtonColor(pushButton_white, pHost->mWhite);
         setButtonColor(pushButton_lWhite, pHost->mLightWhite);
+        setButtonColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
+        setButtonColor(pushButton_hyperlinkBgColor, pHost->mHyperlinkBgColor, true);
     } else {
         pushButton_foreground_color->setStyleSheet(QString());
         pushButton_background_color->setStyleSheet(QString());
@@ -1612,6 +1631,8 @@ void dlgProfilePreferences::setColors()
         pushButton_lCyan->setStyleSheet(QString());
         pushButton_white->setStyleSheet(QString());
         pushButton_lWhite->setStyleSheet(QString());
+        pushButton_hyperlinkFgColor->setStyleSheet(QString());
+        pushButton_hyperlinkBgColor->setStyleSheet(QString());
     }
 }
 
@@ -1722,6 +1743,8 @@ void dlgProfilePreferences::slot_resetColors()
     pHost->mLightMagenta = Qt::magenta;
     pHost->mWhite = Qt::lightGray;
     pHost->mLightWhite = Qt::white;
+    pHost->mHyperlinkFgColor = QColorConstants::Blue;
+    pHost->mHyperlinkBgColor = QColorConstants::Transparent;
 
     setColors();
     if (pHost->mpConsole) {
@@ -1891,6 +1914,22 @@ void dlgProfilePreferences::slot_setCommandBgColor()
     Host* pHost = mpHost;
     if (pHost) {
         setButtonAndProfileColor(pushButton_command_background_color, pHost->mCommandBgColor);
+    }
+}
+
+void dlgProfilePreferences::slot_setHyperlinkFgColor()
+{
+    Host* pHost = mpHost;
+    if (pHost) {
+        setButtonAndProfileColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
+    }
+}
+
+void dlgProfilePreferences::slot_setHyperlinkBgColor()
+{
+    Host* pHost = mpHost;
+    if (pHost) {
+        setButtonAndProfileColor(pushButton_hyperlinkBgColor, pHost->mHyperlinkBgColor, true);
     }
 }
 
@@ -2961,7 +3000,7 @@ void dlgProfilePreferences::slot_saveAndClose()
         pHost->mLogFileNameFormat = comboBox_logFileNameFormat->currentData().toString();
         pHost->mNoAntiAlias = !mNoAntiAlias->isChecked();
         pHost->mAlertOnNewData = mAlertOnNewData->isChecked();
-        pHost->setUnderlineHyperlinks(checkBox_underlineHyperlinks->isChecked());
+        pHost->setHyperlinkStyle(static_cast<Host::HyperlinkStyle>(comboBox_hyperlinkStyle->currentIndex()));
 
         pHost->mUseProxy = groupBox_proxy->isChecked();
         pHost->mProxyAddress = lineEdit_proxyAddress->text();
@@ -4575,12 +4614,12 @@ void dlgProfilePreferences::slot_changeLargeAreaExitArrows(const bool state)
     pHost->setLargeAreaExitArrows(state);
 }
 
-void dlgProfilePreferences::slot_changeUnderlineHyperlinks(const bool state)
+void dlgProfilePreferences::slot_changeHyperlinkStyle(const int index)
 {
     Host* pHost = mpHost;
     if (!pHost) {
         return;
     }
 
-    pHost->setUnderlineHyperlinks(state);
+    pHost->setHyperlinkStyle(static_cast<Host::HyperlinkStyle>(index));
 }

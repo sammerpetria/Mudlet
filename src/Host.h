@@ -636,6 +636,8 @@ public:
     QColor mBgColor{QColorConstants::Black};
     QColor mCommandBgColor{QColorConstants::Black};
     QColor mCommandFgColor{QColor(113, 113, 0)};
+    QColor mHyperlinkFgColor{QColorConstants::Blue};
+    QColor mHyperlinkBgColor{QColorConstants::Transparent};
 
     QColor mBlack_2{QColorConstants::Black};
     QColor mLightBlack_2{QColorConstants::DarkGray};

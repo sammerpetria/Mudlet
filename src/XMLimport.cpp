@@ -1111,6 +1111,10 @@ void XMLimport::readHost(Host* pHost)
                 pHost->mCommandLineFgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mCommandLineBgColor")) {
                 pHost->mCommandLineBgColor.setNamedColor(readElementText());
+            } else if (name() == qsl("mHyperlinkFgColor")) {
+                pHost->mHyperlinkFgColor.setNamedColor(readElementText());
+            } else if (name() == qsl("mHyperlinkBgColor")) {
+                pHost->mHyperlinkBgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mFgColor")) {
                 pHost->mFgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mBgColor")) {
@@ -1155,6 +1159,10 @@ void XMLimport::readHost(Host* pHost)
                 pHost->mCommandLineFgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mCommandLineBgColor")) {
                 pHost->mCommandLineBgColor = QColor::fromString(readElementText());
+            } else if (name() == qsl("mHyperlinkFgColor")) {
+                pHost->mHyperlinkFgColor = QColor::fromString(readElementText());
+            } else if (name() == qsl("mHyperlinkBgColor")) {
+                pHost->mHyperlinkBgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mFgColor")) {
                 pHost->mFgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mBgColor")) {

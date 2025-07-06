@@ -7491,7 +7491,17 @@ int TLuaInterpreter::setConfig(lua_State * L)
         return success();
     }
     if (key == qsl("hyperlinkStyle")) {
+        static const QStringList styles{"none", "underline", "bold", "italic"};
         const auto value = getVerifiedString(L, __func__, 2, "value").toLower();
+
+        if (!styles.contains(value)) {
+            lua_pushnil(L);
+            lua_pushfstring(L,
+                           "invalid hyperlinkStyle string \"%s\", it should be one of \"%s\"",
+                           lua_tostring(L, 2), styles.join(qsl("\", \"")).toUtf8().constData());
+            return 2;
+        }
+
         if (value == qsl("none")) {
             host.setHyperlinkStyle(Host::HyperlinkStyle::None);
         } else if (value == qsl("underline")) {
@@ -7500,9 +7510,8 @@ int TLuaInterpreter::setConfig(lua_State * L)
             host.setHyperlinkStyle(Host::HyperlinkStyle::Bold);
         } else if (value == qsl("italic")) {
             host.setHyperlinkStyle(Host::HyperlinkStyle::Italic);
-        } else {
-            return failure("Invalid hyperlinkStyle value");
         }
+
         return success();
     }
     if (key == qsl("underlineHyperlinks")) {

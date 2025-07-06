@@ -35,6 +35,7 @@
 #include "pre_guard.h"
 #include <QBuffer>
 #include <QtMath>
+#include <QMetaEnum>
 #include "post_guard.h"
 
 XMLimport::XMLimport(Host* pH)
@@ -973,11 +974,21 @@ void XMLimport::readHost(Host* pHost)
         pHost->setCommandLineHistorySaveSize(500);
     }
 
-    if (attributes().hasAttribute(QLatin1String("underlineHyperlinks"))) {
+    if (attributes().hasAttribute(QLatin1String("hyperlinkStyle"))) {
+        const QStringView style(attributes().value(qsl("hyperlinkStyle")));
+        if (style == qsl("None")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::None);
+        } else if (style == qsl("Underline")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+        } else if (style == qsl("Bold")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+        } else if (style == qsl("Italic")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+        }
+    } else if (attributes().hasAttribute(QLatin1String("underlineHyperlinks"))) {
         pHost->setUnderlineHyperlinks(attributes().value(QLatin1String("underlineHyperlinks")) == YES);
     } else {
-        // Default behaviour before this setting was introduced
-        pHost->setUnderlineHyperlinks(true);
+        pHost->setHyperlinkStyle(Host::HyperlinkStyle::Underline);
     }
 
     if (attributes().hasAttribute(QLatin1String("NetworkPacketTimeout"))) {
@@ -1100,6 +1111,8 @@ void XMLimport::readHost(Host* pHost)
                 pHost->mCommandLineFgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mCommandLineBgColor")) {
                 pHost->mCommandLineBgColor.setNamedColor(readElementText());
+            } else if (name() == qsl("mHyperlinkFgColor")) {
+                pHost->mHyperlinkFgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mFgColor")) {
                 pHost->mFgColor.setNamedColor(readElementText());
             } else if (name() == qsl("mBgColor")) {
@@ -1144,6 +1157,8 @@ void XMLimport::readHost(Host* pHost)
                 pHost->mCommandLineFgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mCommandLineBgColor")) {
                 pHost->mCommandLineBgColor = QColor::fromString(readElementText());
+            } else if (name() == qsl("mHyperlinkFgColor")) {
+                pHost->mHyperlinkFgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mFgColor")) {
                 pHost->mFgColor = QColor::fromString(readElementText());
             } else if (name() == qsl("mBgColor")) {

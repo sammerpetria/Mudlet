@@ -38,6 +38,7 @@
 
 #include "pre_guard.h"
 #include <QtConcurrent>
+#include <QMetaEnum>
 #include <QFile>
 #include <sstream>
 #include "post_guard.h"
@@ -473,7 +474,8 @@ void XMLexport::writeHost(Host* pHost, pugi::xml_node mudletPackage)
     host.append_attribute("playerRoomInnerDiameter") = QString::number(innerDiameterPercentage).toUtf8().constData();
     host.append_attribute("CompactInputLine") = pHost->getCompactInputLine() ? "yes" : "no";
     host.append_attribute("CommandLineHistorySaveSize") = QString::number(pHost->getCommandLineHistorySaveSize()).toUtf8().constData();
-    host.append_attribute("underlineHyperlinks") = pHost->getUnderlineHyperlinks() ? "yes" : "no";
+    host.append_attribute("hyperlinkStyle") = QMetaEnum::fromType<Host::HyperlinkStyle>().valueToKey(
+            static_cast<int>(pHost->getHyperlinkStyle()));
 
     QString ignore;
     QSetIterator<QChar> ignoreIterator(pHost->mDoubleClickIgnore);
@@ -554,8 +556,9 @@ void XMLexport::writeHost(Host* pHost, pugi::xml_node mudletPackage)
         host.append_child("mCommandBgColor").text().set(pHost->mCommandBgColor.name().toUtf8().constData());
         host.append_child("mCommandLineFgColor").text().set(pHost->mCommandLineFgColor.name().toUtf8().constData());
         host.append_child("mCommandLineBgColor").text().set(pHost->mCommandLineBgColor.name().toUtf8().constData());
-        host.append_child("mBlack").text().set(pHost->mBlack.name().toUtf8().constData());
-        host.append_child("mLightBlack").text().set(pHost->mLightBlack.name().toUtf8().constData());
+        host.append_child("mHyperlinkFgColor").text().set(pHost->mHyperlinkFgColor.name().toUtf8().constData());
+    host.append_child("mBlack").text().set(pHost->mBlack.name().toUtf8().constData());
+    host.append_child("mLightBlack").text().set(pHost->mLightBlack.name().toUtf8().constData());
         host.append_child("mRed").text().set(pHost->mRed.name().toUtf8().constData());
         host.append_child("mLightRed").text().set(pHost->mLightRed.name().toUtf8().constData());
         host.append_child("mBlue").text().set(pHost->mBlue.name().toUtf8().constData());

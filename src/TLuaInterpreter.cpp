@@ -7490,6 +7490,30 @@ int TLuaInterpreter::setConfig(lua_State * L)
         host.setCommandLineHistorySaveSize(value);
         return success();
     }
+    if (key == qsl("hyperlinkStyle")) {
+        static const QStringList styles{"none", "underline", "bold", "italic"};
+        const auto value = getVerifiedString(L, __func__, 2, "value").toLower();
+
+        if (!styles.contains(value)) {
+            lua_pushnil(L);
+            lua_pushfstring(L,
+                           "invalid hyperlinkStyle string \"%s\", it should be one of \"%s\"",
+                           lua_tostring(L, 2), styles.join(qsl("\", \"")).toUtf8().constData());
+            return 2;
+        }
+
+        if (value == qsl("none")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::None);
+        } else if (value == qsl("underline")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+        } else if (value == qsl("bold")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+        } else if (value == qsl("italic")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+        }
+
+        return success();
+    }
     if (key == qsl("underlineHyperlinks")) {
         const bool value = getVerifiedBool(L, __func__, 2, "value");
         host.setUnderlineHyperlinks(value);
@@ -7639,6 +7663,22 @@ int TLuaInterpreter::getConfig(lua_State *L)
             }
         } },
         { qsl("commandLineHistorySaveSize"), [&](){ lua_pushnumber(L, host.getCommandLineHistorySaveSize()); } },
+        { qsl("hyperlinkStyle"), [&](){
+            switch (host.getHyperlinkStyle()) {
+            case Host::HyperlinkStyle::None:
+                lua_pushstring(L, "none");
+                break;
+            case Host::HyperlinkStyle::Underline:
+                lua_pushstring(L, "underline");
+                break;
+            case Host::HyperlinkStyle::Bold:
+                lua_pushstring(L, "bold");
+                break;
+            case Host::HyperlinkStyle::Italic:
+                lua_pushstring(L, "italic");
+                break;
+            }
+        } },
         { qsl("underlineHyperlinks"), [&](){ lua_pushboolean(L, host.getUnderlineHyperlinks()); } },
         { qsl("controlCharacterHandling"), [&](){
             const auto controlCharacterMode = host.getControlCharacterMode();

@@ -771,9 +771,6 @@
              <string comment="Note that this text is split into two lines so that the message is not too wide in English, please do the same for other locales where the text is the same or longer">This font is not monospace, which may not be ideal for playing some text games:
 you can use it but there could be issues with aligning columns of text</string>
             </property>
-            <property name="buddy">
-             <cstring>fontSize</cstring>
-            </property>
            </widget>
           </item>
           <item row="2" column="0" colspan="4">

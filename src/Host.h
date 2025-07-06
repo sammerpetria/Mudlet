@@ -214,7 +214,7 @@ public:
     ControlCharacterMode  getControlCharacterMode() const { return mControlCharacter; }
     bool            getLargeAreaExitArrows() const { return mLargeAreaExitArrows; }
     void            setLargeAreaExitArrows(const bool);
-    //! Defines how MXP hyperlinks should be highlighted when rendered
+      //! Defines how MXP hyperlinks should be highlighted when rendered
     enum class HyperlinkStyle {
         None,      //!< no special style
         Underline, //!< underline the link text

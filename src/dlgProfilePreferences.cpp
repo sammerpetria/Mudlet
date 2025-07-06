@@ -882,6 +882,7 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
         comboBox_hyperlinkStyle->setCurrentIndex(3);
         break;
     }
+
     updateHyperlinkExample();
     //encoding->setCurrentIndex( pHost->mEncoding );
     mFORCE_SAVE_ON_EXIT->setChecked(pHost->mFORCE_SAVE_ON_EXIT);
@@ -1606,6 +1607,7 @@ void dlgProfilePreferences::setColors()
         setButtonColor(pushButton_lMagenta, pHost->mLightMagenta);
         setButtonColor(pushButton_white, pHost->mWhite);
         setButtonColor(pushButton_lWhite, pHost->mLightWhite);
+
         // allow transparency so users can pick the "None" option
         setButtonColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor, true);
         updateHyperlinkExample();

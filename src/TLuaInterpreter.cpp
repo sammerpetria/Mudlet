@@ -7601,6 +7601,7 @@ int TLuaInterpreter::setConfig(lua_State * L)
         host.setHyperlinkColor(color);
         return success();
     }
+
     if (key == qsl("underlineHyperlinks")) {
         const bool value = getVerifiedBool(L, __func__, 2, "value");
         host.setUnderlineHyperlinks(value);

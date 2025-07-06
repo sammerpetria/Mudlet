@@ -992,6 +992,7 @@ COMMIT_LINE:
             }
         }
 
+
         if (mpHost->mMxpClient.hasFgColor()) {
             c.mFgColor = mpHost->mMxpClient.getFgColor();
         }

@@ -365,7 +365,7 @@
           <item row="5" column="0" colspan="2">
            <widget class="QLabel" name="label_hyperlinkExample">
             <property name="text">
-             <string>Link buy potion</string>
+             <string>Link </string>
             </property>
            </widget>
           </item>

@@ -965,7 +965,7 @@ COMMIT_LINE:
                 c.mFlags |= TChar::Italic;
                 break;
             default:
-                break;
+                break; 
             }
             if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
                 c.mFgColor = mpHost->mHyperlinkFgColor;
@@ -989,7 +989,7 @@ COMMIT_LINE:
                 break;
             default:
                 break;
-            }
+        }
             if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
                 c.mFgColor = mpHost->mHyperlinkFgColor;
             }

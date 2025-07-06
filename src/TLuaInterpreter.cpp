@@ -1591,6 +1591,15 @@ int TLuaInterpreter::getMudletHomeDir(lua_State* L)
     return 1;
 }
 
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#enableHyperlinkUnderline
+int TLuaInterpreter::enableHyperlinkUnderline(lua_State* L)
+{
+    const bool enabled = getVerifiedBool(L, __func__, 1, "enabled");
+    Host& host = getHostFromLua(L);
+    host.setUnderlineHyperlinks(enabled);
+    return 0;
+}
+
 // No documentation available in wiki - internal function used by printError in DebugTools.lua
 int TLuaInterpreter::errorc(lua_State* L)
 {
@@ -5242,6 +5251,7 @@ void TLuaInterpreter::initLuaGlobals()
     lua_register(pGlobalLua, "disableHorizontalScrollBar", TLuaInterpreter::disableHorizontalScrollBar);
     lua_register(pGlobalLua, "enableCommandLine", TLuaInterpreter::enableCommandLine);
     lua_register(pGlobalLua, "disableCommandLine", TLuaInterpreter::disableCommandLine);
+    lua_register(pGlobalLua, "enableHyperlinkUnderline", TLuaInterpreter::enableHyperlinkUnderline);
     lua_register(pGlobalLua, "startLogging", TLuaInterpreter::startLogging);
     lua_register(pGlobalLua, "appendLog", TLuaInterpreter::appendLog);
     lua_register(pGlobalLua, "calcFontSize", TLuaInterpreter::calcFontSize);
@@ -7480,6 +7490,11 @@ int TLuaInterpreter::setConfig(lua_State * L)
         host.setCommandLineHistorySaveSize(value);
         return success();
     }
+    if (key == qsl("underlineHyperlinks")) {
+        const bool value = getVerifiedBool(L, __func__, 2, "value");
+        host.setUnderlineHyperlinks(value);
+        return success();
+    }
     if (key == qsl("controlCharacterHandling")) {
         static const QStringList values{"asis", "oem", "picture"};
         const auto value = getVerifiedString(L, __func__, 2, "value");
@@ -7624,6 +7639,7 @@ int TLuaInterpreter::getConfig(lua_State *L)
             }
         } },
         { qsl("commandLineHistorySaveSize"), [&](){ lua_pushnumber(L, host.getCommandLineHistorySaveSize()); } },
+        { qsl("underlineHyperlinks"), [&](){ lua_pushboolean(L, host.getUnderlineHyperlinks()); } },
         { qsl("controlCharacterHandling"), [&](){
             const auto controlCharacterMode = host.getControlCharacterMode();
             switch (controlCharacterMode) {

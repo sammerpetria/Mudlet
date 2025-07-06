@@ -497,6 +497,7 @@ public:
     static int scrollingActive(lua_State*);
     static int enableCommandLine(lua_State*);
     static int disableCommandLine(lua_State*);
+    static int enableHyperlinkUnderline(lua_State*);
     static int enableClickthrough(lua_State*);
     static int disableClickthrough(lua_State*);
     static int startLogging(lua_State*);

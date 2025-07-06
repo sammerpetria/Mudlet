@@ -324,6 +324,7 @@ Host::Host(int port, const QString& hostname, const QString& login, const QStrin
 , mPlayerRoomInnerDiameterPercentage(70)
 , mDebugShowAllProblemCodepoints(false)
 , mCompactInputLine(false)
+, mUnderlineHyperlinks(true)
 {
     TDebug::addHost(this, mHostName);
 
@@ -3087,6 +3088,11 @@ void Host::setCompactInputLine(const bool state)
             mpConsole->mpButtonMainLayer->setVisible(!state);
         }
     }
+}
+
+void Host::setUnderlineHyperlinks(bool state)
+{
+    mUnderlineHyperlinks = state;
 }
 
 QPointer<TConsole> Host::findConsole(QString name)

@@ -296,8 +296,18 @@
             </property>
            </widget>
           </item>
-         </layout>
-        </widget>
+          <item row="3" column="0" colspan="2">
+           <widget class="QCheckBox" name="checkBox_underlineHyperlinks">
+            <property name="text">
+             <string>Underline hyperlinks in the main display</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+        </layout>
+       </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_protocols">

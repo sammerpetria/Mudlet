@@ -954,7 +954,7 @@ COMMIT_LINE:
 
         if (mHyperlinkActive) {
             c.mLinkIndex = mCurrentHyperlinkLinkId;
-            switch (mpHost->getHyperlinkStyle()) {
+        switch (mpHost->getHyperlinkStyle()) {
             case Host::HyperlinkStyle::Underline:
                 c.mFlags |= TChar::Underline;
                 break;
@@ -991,6 +991,7 @@ COMMIT_LINE:
                 c.mFgColor = mpHost->mHyperlinkFgColor;
             }
         }
+
 
         if (mpHost->mMxpClient.hasFgColor()) {
             c.mFgColor = mpHost->mMxpClient.getFgColor();

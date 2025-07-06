@@ -325,7 +325,8 @@ Host::Host(int port, const QString& hostname, const QString& login, const QStrin
 , mDebugShowAllProblemCodepoints(false)
 , mCompactInputLine(false)
 , mHyperlinkStyle(HyperlinkStyle::Underline)
-, mHyperlinkFgColor(QColorConstants::Transparent)
+, mHyperlinkFgColor(QColorConstants::Blue)
+, mHyperlinkBgColor(QColorConstants::Transparent)
 {
     TDebug::addHost(this, mHostName);
 

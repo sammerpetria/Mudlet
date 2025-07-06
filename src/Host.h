@@ -214,8 +214,24 @@ public:
     ControlCharacterMode  getControlCharacterMode() const { return mControlCharacter; }
     bool            getLargeAreaExitArrows() const { return mLargeAreaExitArrows; }
     void            setLargeAreaExitArrows(const bool);
-    bool            getUnderlineHyperlinks() const { return mUnderlineHyperlinks; }
-    void            setUnderlineHyperlinks(bool);
+    //! Defines how MXP hyperlinks should be highlighted when rendered
+    enum class HyperlinkStyle {
+        None,      //!< no special style
+        Underline, //!< underline the link text
+        Bold,      //!< draw link text in bold
+        Italic     //!< draw link text in italics
+    };
+    Q_ENUM(HyperlinkStyle)
+
+    HyperlinkStyle  getHyperlinkStyle() const { return mHyperlinkStyle; }
+    void            setHyperlinkStyle(HyperlinkStyle style);
+
+    QColor          getHyperlinkColor() const { return mHyperlinkFgColor; }
+    void            setHyperlinkColor(const QColor& color) { mHyperlinkFgColor = color; }
+
+    // compatibility wrappers
+    bool            getUnderlineHyperlinks() const { return mHyperlinkStyle == HyperlinkStyle::Underline; }
+    void            setUnderlineHyperlinks(bool state) { mHyperlinkStyle = state ? HyperlinkStyle::Underline : HyperlinkStyle::None; }
 
     void            forceClose();
     bool            isClosingDown() const { return mIsClosingDown; }
@@ -624,6 +640,7 @@ public:
     QColor mBgColor{QColorConstants::Black};
     QColor mCommandBgColor{QColorConstants::Black};
     QColor mCommandFgColor{QColor(113, 113, 0)};
+    QColor mHyperlinkFgColor{QColorConstants::Transparent};
 
     QColor mBlack_2{QColorConstants::Black};
     QColor mLightBlack_2{QColorConstants::DarkGray};
@@ -906,7 +923,7 @@ private:
 
     // Now a per profile option this one represents the state of this profile:
     bool mCompactInputLine;
-    bool mUnderlineHyperlinks = true;
+    HyperlinkStyle mHyperlinkStyle = HyperlinkStyle::Underline;
 
     QTimer purgeTimer;
 

@@ -1216,7 +1216,6 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     connect(pushButton_command_foreground_color, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setCommandFgColor);
     connect(pushButton_command_background_color, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setCommandBgColor);
     connect(pushButton_hyperlinkFgColor, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setHyperlinkFgColor);
-    connect(pushButton_hyperlinkBgColor, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_setHyperlinkBgColor);
 
     connect(pushButton_resetColors, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_resetColors);
     connect(reset_colors_button_2, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_resetMapColors);
@@ -1320,7 +1319,6 @@ void dlgProfilePreferences::disconnectHostRelatedControls()
     disconnect(pushButton_command_foreground_color, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_command_background_color, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_hyperlinkFgColor, &QAbstractButton::clicked, nullptr, nullptr);
-    disconnect(pushButton_hyperlinkBgColor, &QAbstractButton::clicked, nullptr, nullptr);
 
     disconnect(pushButton_black, &QAbstractButton::clicked, nullptr, nullptr);
     disconnect(pushButton_lBlack, &QAbstractButton::clicked, nullptr, nullptr);
@@ -1607,7 +1605,6 @@ void dlgProfilePreferences::setColors()
         setButtonColor(pushButton_white, pHost->mWhite);
         setButtonColor(pushButton_lWhite, pHost->mLightWhite);
         setButtonColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
-        setButtonColor(pushButton_hyperlinkBgColor, pHost->mHyperlinkBgColor, true);
     } else {
         pushButton_foreground_color->setStyleSheet(QString());
         pushButton_background_color->setStyleSheet(QString());
@@ -1632,7 +1629,6 @@ void dlgProfilePreferences::setColors()
         pushButton_white->setStyleSheet(QString());
         pushButton_lWhite->setStyleSheet(QString());
         pushButton_hyperlinkFgColor->setStyleSheet(QString());
-        pushButton_hyperlinkBgColor->setStyleSheet(QString());
     }
 }
 
@@ -1743,8 +1739,7 @@ void dlgProfilePreferences::slot_resetColors()
     pHost->mLightMagenta = Qt::magenta;
     pHost->mWhite = Qt::lightGray;
     pHost->mLightWhite = Qt::white;
-    pHost->mHyperlinkFgColor = QColorConstants::Blue;
-    pHost->mHyperlinkBgColor = QColorConstants::Transparent;
+    pHost->mHyperlinkFgColor = QColorConstants::Transparent;
 
     setColors();
     if (pHost->mpConsole) {
@@ -1922,14 +1917,6 @@ void dlgProfilePreferences::slot_setHyperlinkFgColor()
     Host* pHost = mpHost;
     if (pHost) {
         setButtonAndProfileColor(pushButton_hyperlinkFgColor, pHost->mHyperlinkFgColor);
-    }
-}
-
-void dlgProfilePreferences::slot_setHyperlinkBgColor()
-{
-    Host* pHost = mpHost;
-    if (pHost) {
-        setButtonAndProfileColor(pushButton_hyperlinkBgColor, pHost->mHyperlinkBgColor, true);
     }
 }
 

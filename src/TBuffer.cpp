@@ -954,7 +954,7 @@ COMMIT_LINE:
 
         if (mHyperlinkActive) {
             c.mLinkIndex = mCurrentHyperlinkLinkId;
-            switch (mpHost->getHyperlinkStyle()) {
+        switch (mpHost->getHyperlinkStyle()) {
             case Host::HyperlinkStyle::Underline:
                 c.mFlags |= TChar::Underline;
                 break;
@@ -965,13 +965,10 @@ COMMIT_LINE:
                 c.mFlags |= TChar::Italic;
                 break;
             default:
-                break; 
+                break;
             }
             if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
                 c.mFgColor = mpHost->mHyperlinkFgColor;
-            }
-            if (mpHost->mHyperlinkBgColor != QColorConstants::Transparent) {
-                c.mBgColor = mpHost->mHyperlinkBgColor;
             }
         }
 
@@ -989,14 +986,12 @@ COMMIT_LINE:
                 break;
             default:
                 break;
-        }
+            }
             if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
                 c.mFgColor = mpHost->mHyperlinkFgColor;
             }
-            if (mpHost->mHyperlinkBgColor != QColorConstants::Transparent) {
-                c.mBgColor = mpHost->mHyperlinkBgColor;
-            }
         }
+
 
         if (mpHost->mMxpClient.hasFgColor()) {
             c.mFgColor = mpHost->mMxpClient.getFgColor();
@@ -2314,8 +2309,7 @@ void TBuffer::resetColors()
     pHost->mLightMagenta = Qt::magenta;
     pHost->mWhite = Qt::lightGray;
     pHost->mLightWhite = Qt::white;
-    pHost->mHyperlinkFgColor = QColorConstants::Blue;
-    pHost->mHyperlinkBgColor = QColorConstants::Transparent;
+    pHost->mHyperlinkFgColor = QColorConstants::Transparent;
 
     // This will refresh the "main" console as it is only this class instance
     // associated with that one that will call this method from the

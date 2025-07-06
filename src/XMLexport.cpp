@@ -557,9 +557,8 @@ void XMLexport::writeHost(Host* pHost, pugi::xml_node mudletPackage)
         host.append_child("mCommandLineFgColor").text().set(pHost->mCommandLineFgColor.name().toUtf8().constData());
         host.append_child("mCommandLineBgColor").text().set(pHost->mCommandLineBgColor.name().toUtf8().constData());
         host.append_child("mHyperlinkFgColor").text().set(pHost->mHyperlinkFgColor.name().toUtf8().constData());
-        host.append_child("mHyperlinkBgColor").text().set(pHost->mHyperlinkBgColor.name().toUtf8().constData());
-    host.append_child("mBlack").text().set(pHost->mBlack.name().toUtf8().constData());
-    host.append_child("mLightBlack").text().set(pHost->mLightBlack.name().toUtf8().constData());
+        host.append_child("mBlack").text().set(pHost->mBlack.name().toUtf8().constData());
+        host.append_child("mLightBlack").text().set(pHost->mLightBlack.name().toUtf8().constData());
         host.append_child("mRed").text().set(pHost->mRed.name().toUtf8().constData());
         host.append_child("mLightRed").text().set(pHost->mLightRed.name().toUtf8().constData());
         host.append_child("mBlue").text().set(pHost->mBlue.name().toUtf8().constData());

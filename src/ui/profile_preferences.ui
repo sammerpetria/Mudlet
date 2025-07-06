@@ -296,13 +296,57 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0" colspan="2">
-           <widget class="QCheckBox" name="checkBox_underlineHyperlinks">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_hyperlinkHighlight">
             <property name="text">
-             <string>Underline hyperlinks in the main display</string>
+             <string>Hyperlink Highlight:</string>
             </property>
-            <property name="checked">
+            <property name="buddy">
+             <cstring>comboBox_hyperlinkStyle</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="comboBox_hyperlinkStyle">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Underline</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bold</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Italic</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_hyperlinkColor">
+            <property name="text">
+             <string>Hyperlink color:</string>
+            </property>
+            <property name="buddy">
+             <cstring>pushButton_hyperlinkFgColor</cstring>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QPushButton" name="pushButton_hyperlinkFgColor">
+            <property name="autoFillBackground">
              <bool>true</bool>
+            </property>
+            <property name="text">
+             <string/>
             </property>
            </widget>
           </item>
@@ -756,9 +800,6 @@
             <property name="text">
              <string comment="Note that this text is split into two lines so that the message is not too wide in English, please do the same for other locales where the text is the same or longer">This font is not monospace, which may not be ideal for playing some text games:
 you can use it but there could be issues with aligning columns of text</string>
-            </property>
-            <property name="buddy">
-             <cstring>fontSize</cstring>
             </property>
            </widget>
           </item>
@@ -4436,6 +4477,7 @@ you can use it but there could be issues with aligning columns of text</string>
   <tabstop>pushButton_magenta</tabstop>
   <tabstop>pushButton_cyan</tabstop>
   <tabstop>pushButton_white</tabstop>
+  <tabstop>pushButton_hyperlinkFgColor</tabstop>
   <tabstop>checkBox_allowServerToRedefineColors</tabstop>
   <tabstop>pushButton_lBlack</tabstop>
   <tabstop>pushButton_lRed</tabstop>

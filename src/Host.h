@@ -214,6 +214,8 @@ public:
     ControlCharacterMode  getControlCharacterMode() const { return mControlCharacter; }
     bool            getLargeAreaExitArrows() const { return mLargeAreaExitArrows; }
     void            setLargeAreaExitArrows(const bool);
+    bool            getUnderlineHyperlinks() const { return mUnderlineHyperlinks; }
+    void            setUnderlineHyperlinks(bool);
 
     void            forceClose();
     bool            isClosingDown() const { return mIsClosingDown; }
@@ -904,6 +906,7 @@ private:
 
     // Now a per profile option this one represents the state of this profile:
     bool mCompactInputLine;
+    bool mUnderlineHyperlinks = true;
 
     QTimer purgeTimer;
 

@@ -973,6 +973,13 @@ void XMLimport::readHost(Host* pHost)
         pHost->setCommandLineHistorySaveSize(500);
     }
 
+    if (attributes().hasAttribute(QLatin1String("underlineHyperlinks"))) {
+        pHost->setUnderlineHyperlinks(attributes().value(QLatin1String("underlineHyperlinks")) == YES);
+    } else {
+        // Default behaviour before this setting was introduced
+        pHost->setUnderlineHyperlinks(true);
+    }
+
     if (attributes().hasAttribute(QLatin1String("NetworkPacketTimeout"))) {
         // These limits are also hard coded into the QSpinBox used to adjust
         // this setting in the preferences:

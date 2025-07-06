@@ -473,6 +473,7 @@ void XMLexport::writeHost(Host* pHost, pugi::xml_node mudletPackage)
     host.append_attribute("playerRoomInnerDiameter") = QString::number(innerDiameterPercentage).toUtf8().constData();
     host.append_attribute("CompactInputLine") = pHost->getCompactInputLine() ? "yes" : "no";
     host.append_attribute("CommandLineHistorySaveSize") = QString::number(pHost->getCommandLineHistorySaveSize()).toUtf8().constData();
+    host.append_attribute("underlineHyperlinks") = pHost->getUnderlineHyperlinks() ? "yes" : "no";
 
     QString ignore;
     QSetIterator<QChar> ignoreIterator(pHost->mDoubleClickIgnore);

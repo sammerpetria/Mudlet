@@ -953,12 +953,16 @@ COMMIT_LINE:
 
         if (mHyperlinkActive) {
             c.mLinkIndex = mCurrentHyperlinkLinkId;
-            c.mFlags |= TChar::Underline;
+            if (mpHost->getUnderlineHyperlinks()) {
+                c.mFlags |= TChar::Underline;
+            }
         }
 
         if (mpHost->mMxpClient.isInLinkMode()) {
             c.mLinkIndex = mLinkStore.getCurrentLinkID();
-            c.mFlags |= TChar::Underline;
+            if (mpHost->getUnderlineHyperlinks()) {
+                c.mFlags |= TChar::Underline;
+            }
         }
 
         if (mpHost->mMxpClient.hasFgColor()) {

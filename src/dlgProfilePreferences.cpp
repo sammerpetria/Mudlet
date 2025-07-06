@@ -384,6 +384,7 @@ void dlgProfilePreferences::disableHostDetails()
 
     // ----- groupBox_miscellaneous -----
     mAlertOnNewData->setEnabled(false);
+    checkBox_underlineHyperlinks->setEnabled(false);
     acceptServerGUI->setEnabled(false);
     mFORCE_SAVE_ON_EXIT->setEnabled(false);
     acceptServerMedia->setEnabled(false);
@@ -517,6 +518,7 @@ void dlgProfilePreferences::enableHostDetails()
 
     // ----- groupBox_miscellaneous -----
     mAlertOnNewData->setEnabled(true);
+    checkBox_underlineHyperlinks->setEnabled(true);
     acceptServerGUI->setEnabled(true);
     mFORCE_SAVE_ON_EXIT->setEnabled(true);
     acceptServerMedia->setEnabled(true);
@@ -866,6 +868,7 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     mFORCE_MCCP_OFF->setChecked(pHost->mFORCE_NO_COMPRESSION);
     mFORCE_GA_OFF->setChecked(pHost->mFORCE_GA_OFF);
     mAlertOnNewData->setChecked(pHost->mAlertOnNewData);
+    checkBox_underlineHyperlinks->setChecked(pHost->getUnderlineHyperlinks());
     //encoding->setCurrentIndex( pHost->mEncoding );
     mFORCE_SAVE_ON_EXIT->setChecked(pHost->mFORCE_SAVE_ON_EXIT);
 
@@ -1250,6 +1253,7 @@ void dlgProfilePreferences::initWithHost(Host* pHost)
     connect(mIsToLogInHtml, &QAbstractButton::clicked, this, &dlgProfilePreferences::slot_changeLogFileAsHtml);
     connect(doubleSpinBox_networkPacketTimeout, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &dlgProfilePreferences::slot_setPostingTimeout);
     connect(checkBox_largeAreaExitArrows, &QCheckBox::toggled, this, &dlgProfilePreferences::slot_changeLargeAreaExitArrows);
+    connect(checkBox_underlineHyperlinks, &QCheckBox::toggled, this, &dlgProfilePreferences::slot_changeUnderlineHyperlinks);
 
     //Shortcuts tab
     auto shortcutKeys = mudlet::self()->mpShortcutsManager->iterator();
@@ -1375,6 +1379,7 @@ void dlgProfilePreferences::disconnectHostRelatedControls()
     disconnect(spinBox_playerRoomOuterDiameter, qOverload<int>(&QSpinBox::valueChanged), nullptr, nullptr);
     disconnect(spinBox_playerRoomInnerDiameter, qOverload<int>(&QSpinBox::valueChanged), nullptr, nullptr);
     disconnect(checkBox_largeAreaExitArrows, &QCheckBox::toggled, nullptr, nullptr);
+    disconnect(checkBox_underlineHyperlinks, &QCheckBox::toggled, nullptr, nullptr);
 }
 
 void dlgProfilePreferences::clearHostDetails()
@@ -1435,6 +1440,7 @@ void dlgProfilePreferences::clearHostDetails()
     mFORCE_MCCP_OFF->setChecked(false);
     mFORCE_GA_OFF->setChecked(false);
     mAlertOnNewData->setChecked(false);
+    checkBox_underlineHyperlinks->setChecked(true);
     mFORCE_SAVE_ON_EXIT->setChecked(false);
 
     pushButton_chooseProfiles->setEnabled(false);
@@ -2955,6 +2961,7 @@ void dlgProfilePreferences::slot_saveAndClose()
         pHost->mLogFileNameFormat = comboBox_logFileNameFormat->currentData().toString();
         pHost->mNoAntiAlias = !mNoAntiAlias->isChecked();
         pHost->mAlertOnNewData = mAlertOnNewData->isChecked();
+        pHost->setUnderlineHyperlinks(checkBox_underlineHyperlinks->isChecked());
 
         pHost->mUseProxy = groupBox_proxy->isChecked();
         pHost->mProxyAddress = lineEdit_proxyAddress->text();
@@ -4566,4 +4573,14 @@ void dlgProfilePreferences::slot_changeLargeAreaExitArrows(const bool state)
     }
 
     pHost->setLargeAreaExitArrows(state);
+}
+
+void dlgProfilePreferences::slot_changeUnderlineHyperlinks(const bool state)
+{
+    Host* pHost = mpHost;
+    if (!pHost) {
+        return;
+    }
+
+    pHost->setUnderlineHyperlinks(state);
 }

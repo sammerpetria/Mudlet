@@ -3090,9 +3090,9 @@ void Host::setCompactInputLine(const bool state)
     }
 }
 
-void Host::setUnderlineHyperlinks(bool state)
+void Host::setHyperlinkStyle(HyperlinkStyle style)
 {
-    mUnderlineHyperlinks = state;
+    mHyperlinkStyle = style;
 }
 
 QPointer<TConsole> Host::findConsole(QString name)

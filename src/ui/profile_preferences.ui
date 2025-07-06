@@ -299,7 +299,7 @@
           <item row="3" column="0">
            <widget class="QLabel" name="label_hyperlinkHighlight">
             <property name="text">
-             <string>Hyperlink Highlight:</string>
+             <string>Hyperlink:</string>
             </property>
             <property name="buddy">
              <cstring>comboBox_hyperlinkStyle</cstring>
@@ -307,13 +307,18 @@
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QComboBox" name="comboBox_hyperlinkStyle">
-            <property name="maximumSize">
-             <size>
-              <width>120</width>
-              <height>16777215</height>
-             </size>
-            </property>
+           <layout class="QHBoxLayout" name="layout_hyperlink">
+            <item>
+             <widget class="QComboBox" name="comboBox_hyperlinkStyle">
+              <property name="maximumSize">
+               <size>
+                <width>120</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="currentIndex">
+               <number>1</number>
+              </property>
             <item>
              <property name="text">
               <string>None</string>
@@ -334,38 +339,30 @@
               <string>Italic</string>
              </property>
             </item>
-           </widget>
+            </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_hyperlinkFgColor">
+              <property name="maximumSize">
+               <size>
+                <width>80</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="autoFillBackground">
+               <bool>true</bool>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_hyperlinkColor">
-            <property name="text">
-             <string>Hyperlink color:</string>
-            </property>
-            <property name="buddy">
-             <cstring>pushButton_hyperlinkFgColor</cstring>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QPushButton" name="pushButton_hyperlinkFgColor">
-            <property name="maximumSize">
-             <size>
-              <width>80</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="autoFillBackground">
-             <bool>true</bool>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0" colspan="2">
+          <item row="4" column="0" colspan="2">
            <widget class="QLabel" name="label_hyperlinkExample">
             <property name="text">
-             <string>Link </string>
+             <string/>
             </property>
            </widget>
           </item>

@@ -214,11 +214,12 @@ public:
     ControlCharacterMode  getControlCharacterMode() const { return mControlCharacter; }
     bool            getLargeAreaExitArrows() const { return mLargeAreaExitArrows; }
     void            setLargeAreaExitArrows(const bool);
+      //! Defines how MXP hyperlinks should be highlighted when rendered
     enum class HyperlinkStyle {
-        None,
-        Underline,
-        Bold,
-        Italic
+        None,      //!< no special style
+        Underline, //!< underline the link text
+        Bold,      //!< draw link text in bold
+        Italic     //!< draw link text in italics
     };
     Q_ENUM(HyperlinkStyle)
 
@@ -637,7 +638,7 @@ public:
     QColor mCommandBgColor{QColorConstants::Black};
     QColor mCommandFgColor{QColor(113, 113, 0)};
     QColor mHyperlinkFgColor{QColorConstants::Transparent};
-    
+
     QColor mBlack_2{QColorConstants::Black};
     QColor mLightBlack_2{QColorConstants::DarkGray};
     QColor mRed_2{QColorConstants::DarkRed};

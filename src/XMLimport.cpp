@@ -35,6 +35,7 @@
 #include "pre_guard.h"
 #include <QBuffer>
 #include <QtMath>
+#include <QMetaEnum>
 #include "post_guard.h"
 
 XMLimport::XMLimport(Host* pH)
@@ -973,11 +974,21 @@ void XMLimport::readHost(Host* pHost)
         pHost->setCommandLineHistorySaveSize(500);
     }
 
-    if (attributes().hasAttribute(QLatin1String("underlineHyperlinks"))) {
+    if (attributes().hasAttribute(QLatin1String("hyperlinkStyle"))) {
+        const QStringView style(attributes().value(qsl("hyperlinkStyle")));
+        if (style == qsl("None")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::None);
+        } else if (style == qsl("Underline")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+        } else if (style == qsl("Bold")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+        } else if (style == qsl("Italic")) {
+            pHost->setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+        }
+    } else if (attributes().hasAttribute(QLatin1String("underlineHyperlinks"))) {
         pHost->setUnderlineHyperlinks(attributes().value(QLatin1String("underlineHyperlinks")) == YES);
     } else {
-        // Default behaviour before this setting was introduced
-        pHost->setUnderlineHyperlinks(true);
+        pHost->setHyperlinkStyle(Host::HyperlinkStyle::Underline);
     }
 
     if (attributes().hasAttribute(QLatin1String("NetworkPacketTimeout"))) {

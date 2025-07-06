@@ -297,13 +297,27 @@
            </widget>
           </item>
           <item row="3" column="0" colspan="2">
-           <widget class="QCheckBox" name="checkBox_underlineHyperlinks">
-            <property name="text">
-             <string>Underline hyperlinks in the main display</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
+           <widget class="QComboBox" name="comboBox_hyperlinkStyle">
+            <item>
+             <property name="text">
+              <string>None</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Underline</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Bold</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Italic</string>
+             </property>
+            </item>
            </widget>
           </item>
         </layout>
@@ -756,9 +770,6 @@
             <property name="text">
              <string comment="Note that this text is split into two lines so that the message is not too wide in English, please do the same for other locales where the text is the same or longer">This font is not monospace, which may not be ideal for playing some text games:
 you can use it but there could be issues with aligning columns of text</string>
-            </property>
-            <property name="buddy">
-             <cstring>fontSize</cstring>
             </property>
            </widget>
           </item>

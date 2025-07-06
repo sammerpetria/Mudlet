@@ -324,7 +324,7 @@ Host::Host(int port, const QString& hostname, const QString& login, const QStrin
 , mPlayerRoomInnerDiameterPercentage(70)
 , mDebugShowAllProblemCodepoints(false)
 , mCompactInputLine(false)
-, mUnderlineHyperlinks(true)
+, mHyperlinkStyle(HyperlinkStyle::Underline)
 {
     TDebug::addHost(this, mHostName);
 
@@ -3090,9 +3090,9 @@ void Host::setCompactInputLine(const bool state)
     }
 }
 
-void Host::setUnderlineHyperlinks(bool state)
+void Host::setHyperlinkStyle(HyperlinkStyle style)
 {
-    mUnderlineHyperlinks = state;
+    mHyperlinkStyle = style;
 }
 
 QPointer<TConsole> Host::findConsole(QString name)

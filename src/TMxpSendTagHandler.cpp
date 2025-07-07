@@ -147,7 +147,5 @@ void TMxpSendTagHandler::updateHrefInLinks(TMxpClient& client) const
 }
 void TMxpSendTagHandler::handleContent(char ch)
 {
-    if (mIsHrefInContent) {
-        mCurrentTagContent.append(ch);
-    }
+    mCurrentTagContent.append(ch);
 }

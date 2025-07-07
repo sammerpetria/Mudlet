@@ -129,6 +129,10 @@ public:
     // Shouldn't be here, look for a better solution
     QQueue<TMxpEvent> mMxpEvents;
 
+    void setCaptionForSendEvent(const QString& caption) override;
+
+    QStack<int> mSendEventIndices;
+
 private:
     Host* mpHost;
     bool mLinkMode;

@@ -30,7 +30,6 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleStartTag(TMxpContext& ctx, TMxpCl
 
     mCurrentTagContent.clear();
 
-
     QString href = extractHref(tag);
     QString hint = extractHint(tag);
 

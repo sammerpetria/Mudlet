@@ -26,8 +26,6 @@
 
 static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
-
-
 QString TMxpMudlet::getVersion()
 {
     return mudlet::self()->scmVersion;
@@ -97,11 +95,13 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
             enqueueMxpEvent(tag->asStartTag());
         } else if (tag->isNamed("SEND")) {
 
-          // send events are queued on closing tag so the caption is available
+            // send events are queued on closing tag so the caption is available
             TMxpEvent event;
             event.name = tag->getName();
-            for (const auto& attrName : tag->getAttributesNames()) {
-                event.attrs[attrName] = tag->getAttributeValue(attrName);
+            auto* startTag = tag->asStartTag();
+            for (const auto& attrName : startTag->getAttributesNames()) {
+                event.attrs[attrName] = startTag->getAttributeValue(attrName);
+
             }
             event.actions = getLinkStore().getCurrentLinks();
             event.caption.clear();

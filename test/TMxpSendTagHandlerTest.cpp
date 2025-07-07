@@ -281,6 +281,7 @@ private slots:
         QCOMPARE(handler.currentCaption(), "room");
     }
 
+
     void testCaptionWithControlCodes() {
         TMxpStubClient stub;
         TMxpProcessor processor(&stub);
@@ -294,6 +295,7 @@ private slots:
         QCOMPARE(stub.mHrefs[0], "send([[cmd]])");
         QCOMPARE(stub.lastCaption, "TEXT");
     }
+
 
 };
 

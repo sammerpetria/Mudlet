@@ -55,7 +55,7 @@ public:
     explicit dlgProfilePreferences(QWidget*, Host* pHost = nullptr);
     void setTab(QString tab);
 
-public slots:
+public slots:    
     // Terminal colors.
     void slot_setColorBlack();
     void slot_setColorLightBlack();

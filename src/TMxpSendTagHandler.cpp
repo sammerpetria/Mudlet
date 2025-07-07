@@ -27,7 +27,6 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleStartTag(TMxpContext& ctx, TMxpCl
     //        return MXP_TAG_NOT_HANDLED;
 
     mLastCaption.clear();
-    mCurrentTagContent.clear();
 
     QString href = extractHref(tag);
     QString hint = extractHint(tag);

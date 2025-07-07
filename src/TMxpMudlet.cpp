@@ -26,7 +26,6 @@
 
 static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
-
 QString TMxpMudlet::getVersion()
 {
     return mudlet::self()->scmVersion;
@@ -95,12 +94,14 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
         if (mpContext->getElementRegistry().containsElement(tag->getName())) {
             enqueueMxpEvent(tag->asStartTag());
         } else if (tag->isNamed("SEND")) {
+
             // send events are queued on closing tag so the caption is available
             TMxpEvent event;
             event.name = tag->getName();
             auto* startTag = tag->asStartTag();
             for (const auto& attrName : startTag->getAttributesNames()) {
                 event.attrs[attrName] = startTag->getAttributeValue(attrName);
+
             }
             event.actions = getLinkStore().getCurrentLinks();
             event.caption.clear();
@@ -125,6 +126,7 @@ void TMxpMudlet::enqueueMxpEvent(MxpStartTag* tag)
 
 void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
 {
+
     if (!mPendingSendEvents.isEmpty()) {
         TMxpEvent event = mPendingSendEvents.pop();
         event.caption = caption;
@@ -135,6 +137,7 @@ void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
             it.value().replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
         }
         mMxpEvents.enqueue(event);
+
     }
 }
 

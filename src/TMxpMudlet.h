@@ -29,6 +29,7 @@
 #include "pre_guard.h"
 #include <QList>
 #include <QQueue>
+#include <QStack>
 #include "post_guard.h"
 
 class Host;
@@ -131,7 +132,7 @@ public:
 
     void setCaptionForSendEvent(const QString& caption) override;
 
-    QStack<int> mSendEventIndices;
+    QStack<TMxpEvent> mPendingSendEvents;
 
 private:
     Host* mpHost;

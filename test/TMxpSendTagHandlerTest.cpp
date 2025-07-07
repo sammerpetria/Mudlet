@@ -281,6 +281,20 @@ private slots:
         QCOMPARE(handler.currentCaption(), "room");
     }
 
+    void testCaptionWithControlCodes() {
+        TMxpStubClient stub;
+        TMxpProcessor processor(&stub);
+
+        std::string input = "\x1B[1z<send href='cmd'>TEXT</send>\x1B[7z";
+        for (char &ch : input) {
+            processor.processMxpInput(ch, true);
+        }
+
+        QCOMPARE(stub.mHrefs.size(), 1);
+        QCOMPARE(stub.mHrefs[0], "send([[cmd]])");
+        QCOMPARE(stub.lastCaption, "TEXT");
+    }
+
 };
 
 #include "TMxpSendTagHandlerTest.moc"

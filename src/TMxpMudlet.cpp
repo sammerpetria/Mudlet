@@ -24,6 +24,9 @@
 #include "TLinkStore.h"
 #include <QStack>
 
+static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
+
+
 
 QString TMxpMudlet::getVersion()
 {
@@ -93,8 +96,16 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
         if (mpContext->getElementRegistry().containsElement(tag->getName())) {
             enqueueMxpEvent(tag->asStartTag());
         } else if (tag->isNamed("SEND")) {
-            enqueueMxpEvent(tag->asStartTag());
-            mSendEventIndices.push(mMxpEvents.size() - 1);
+
+          // send events are queued on closing tag so the caption is available
+            TMxpEvent event;
+            event.name = tag->getName();
+            for (const auto& attrName : tag->getAttributesNames()) {
+                event.attrs[attrName] = tag->getAttributeValue(attrName);
+            }
+            event.actions = getLinkStore().getCurrentLinks();
+            event.caption.clear();
+            mPendingSendEvents.push(event);
         }
     }
 
@@ -115,11 +126,18 @@ void TMxpMudlet::enqueueMxpEvent(MxpStartTag* tag)
 
 void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
 {
-    if (!mSendEventIndices.isEmpty()) {
-        int idx = mSendEventIndices.pop();
-        if (idx >= 0 && idx < mMxpEvents.size()) {
-            mMxpEvents[idx].caption = caption;
+
+    if (!mPendingSendEvents.isEmpty()) {
+        TMxpEvent event = mPendingSendEvents.pop();
+        event.caption = caption;
+        for (QString& act : event.actions) {
+            act.replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
         }
+        for (auto it = event.attrs.begin(); it != event.attrs.end(); ++it) {
+            it.value().replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
+        }
+        mMxpEvents.enqueue(event);
+
     }
 }
 

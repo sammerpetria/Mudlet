@@ -22,6 +22,9 @@
 #include "TMedia.h"
 #include "TConsole.h"
 #include "TLinkStore.h"
+#include <QStack>
+
+static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
 
 QString TMxpMudlet::getVersion()
@@ -93,6 +96,7 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
             enqueueMxpEvent(tag->asStartTag());
         } else if (tag->isNamed("SEND")) {
             enqueueMxpEvent(tag->asStartTag());
+            mSendEventIndices.push(mMxpEvents.size() - 1);
         }
     }
 
@@ -107,7 +111,25 @@ void TMxpMudlet::enqueueMxpEvent(MxpStartTag* tag)
         mxpEvent.attrs[attrName] = tag->getAttributeValue(attrName);
     }
     mxpEvent.actions = getLinkStore().getCurrentLinks();
+    mxpEvent.caption.clear();
     mMxpEvents.enqueue(mxpEvent);
+}
+
+void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
+{
+    if (!mSendEventIndices.isEmpty()) {
+        int idx = mSendEventIndices.pop();
+        if (idx >= 0 && idx < mMxpEvents.size()) {
+            TMxpEvent& event = mMxpEvents[idx];
+            event.caption = caption;
+            for (QString& act : event.actions) {
+                act.replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
+            }
+            for (auto it = event.attrs.begin(); it != event.attrs.end(); ++it) {
+                it.value().replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
+            }
+        }
+    }
 }
 
 TLinkStore& TMxpMudlet::getLinkStore()

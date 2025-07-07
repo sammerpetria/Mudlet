@@ -27,7 +27,6 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleStartTag(TMxpContext& ctx, TMxpCl
     //        return MXP_TAG_NOT_HANDLED;
 
     mLastCaption.clear();
-
     mCurrentTagContent.clear();
 
     QString href = extractHref(tag);
@@ -120,7 +119,7 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleEndTag(TMxpContext& ctx, TMxpClie
         updateHrefInLinks(client);
     }
 
-    mLastCaption = mCurrentTagContent;
+    mLastCaption = mCurrentTagContent.trimmed();
     client.setCaptionForSendEvent(mLastCaption);
 
     resetCurrentTagContent(client);

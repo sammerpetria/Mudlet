@@ -24,8 +24,8 @@
 #include "TLinkStore.h"
 #include <QStack>
 
-static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
+static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
 QString TMxpMudlet::getVersion()
 {
@@ -107,7 +107,6 @@ TMxpTagHandlerResult TMxpMudlet::tagHandled(MxpTag* tag, TMxpTagHandlerResult re
             mPendingSendEvents.push(event);
         }
     }
-
     return result;
 }
 

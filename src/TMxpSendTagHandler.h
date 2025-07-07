@@ -37,10 +37,12 @@ public:
     , mLinkId(0)
     {}
 
-    TMxpTagHandlerResult handleStartTag(TMxpContext& ctx, TMxpClient& client, MxpStartTag* tag) override;
-    TMxpTagHandlerResult handleEndTag(TMxpContext& ctx, TMxpClient& client, MxpEndTag* tag) override;
+      TMxpTagHandlerResult handleStartTag(TMxpContext& ctx, TMxpClient& client, MxpStartTag* tag) override;
+      TMxpTagHandlerResult handleEndTag(TMxpContext& ctx, TMxpClient& client, MxpEndTag* tag) override;
 
-    void handleContent(char ch) override;
+      void handleContent(char ch) override;
+
+      QString currentCaption() const { return mLastCaption; }
 
 private:
     void updateHrefInLinks(TMxpClient& client) const;
@@ -54,6 +56,7 @@ private:
 
     bool mIsHrefInContent;
     QString mCurrentTagContent;
+    QString mLastCaption;
     int mLinkId;
 };
 

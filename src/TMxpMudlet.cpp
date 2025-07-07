@@ -24,6 +24,7 @@
 #include "TLinkStore.h"
 #include <QStack>
 
+static const QString PLACEHOLDER_TEXT = QLatin1String("&text;");
 
 QString TMxpMudlet::getVersion()
 {
@@ -118,7 +119,16 @@ void TMxpMudlet::setCaptionForSendEvent(const QString& caption)
     if (!mSendEventIndices.isEmpty()) {
         int idx = mSendEventIndices.pop();
         if (idx >= 0 && idx < mMxpEvents.size()) {
-            mMxpEvents[idx].caption = caption;
+
+            TMxpEvent& event = mMxpEvents[idx];
+            event.caption = caption;
+            for (QString& act : event.actions) {
+                act.replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
+            }
+            for (auto it = event.attrs.begin(); it != event.attrs.end(); ++it) {
+                it.value().replace(PLACEHOLDER_TEXT, caption, Qt::CaseInsensitive);
+            }
+
         }
     }
 }

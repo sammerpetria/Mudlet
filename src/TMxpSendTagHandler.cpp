@@ -28,6 +28,8 @@ TMxpTagHandlerResult TMxpSendTagHandler::handleStartTag(TMxpContext& ctx, TMxpCl
 
     mLastCaption.clear();
 
+    mCurrentTagContent.clear();
+
     QString href = extractHref(tag);
     QString hint = extractHint(tag);
 
@@ -147,7 +149,5 @@ void TMxpSendTagHandler::updateHrefInLinks(TMxpClient& client) const
 }
 void TMxpSendTagHandler::handleContent(char ch)
 {
-    if (mIsHrefInContent) {
-        mCurrentTagContent.append(ch);
-    }
+    mCurrentTagContent.append(ch);
 }

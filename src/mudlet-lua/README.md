@@ -23,3 +23,8 @@ MXP events
 ----------
 
 `mxp.send` events now include a `caption` field with the text between the SEND tags.
+
+The `caption` contains the plain text shown to the user when hovering the
+link. Commands triggered by the SEND element continue to be listed in the
+`actions` array. The nested `actions.caption` field that used to hold this text
+no longer exists.

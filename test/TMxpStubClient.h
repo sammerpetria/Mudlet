@@ -73,6 +73,7 @@ public:
     QStringList mHrefs, mHints;
 
     QString mPublishedEntityName, mPublishedEntityValue;
+    QString lastCaption;
 
     QString style;
 
@@ -218,6 +219,10 @@ public:
     }
 
     void setVariable(const QString& name, const QString& value) override {}
+
+    void setCaptionForSendEvent(const QString& caption) override {
+        lastCaption = caption;
+    }
 };
 
 #endif //MUDLET_TEST_TMXPSTUBCLIENT_H

@@ -22,6 +22,7 @@
 
 
 #include "TBuffer.h"
+#include "Host.h"
 
 #include "mudlet.h"
 #include "TEvent.h"
@@ -953,12 +954,42 @@ COMMIT_LINE:
 
         if (mHyperlinkActive) {
             c.mLinkIndex = mCurrentHyperlinkLinkId;
-            c.mFlags |= TChar::Underline;
+            switch (mpHost->getHyperlinkStyle()) {
+            case Host::HyperlinkStyle::Underline:
+                c.mFlags |= TChar::Underline;
+                break;
+            case Host::HyperlinkStyle::Bold:
+                c.mFlags |= TChar::Bold;
+                break;
+            case Host::HyperlinkStyle::Italic:
+                c.mFlags |= TChar::Italic;
+                break;
+            default:
+                break;
+            }
+            if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
+                c.mFgColor = mpHost->mHyperlinkFgColor;
+            }
         }
 
         if (mpHost->mMxpClient.isInLinkMode()) {
             c.mLinkIndex = mLinkStore.getCurrentLinkID();
-            c.mFlags |= TChar::Underline;
+            switch (mpHost->getHyperlinkStyle()) {
+            case Host::HyperlinkStyle::Underline:
+                c.mFlags |= TChar::Underline;
+                break;
+            case Host::HyperlinkStyle::Bold:
+                c.mFlags |= TChar::Bold;
+                break;
+            case Host::HyperlinkStyle::Italic:
+                c.mFlags |= TChar::Italic;
+                break;
+            default:
+                break;
+            }
+            if (mpHost->mHyperlinkFgColor != QColorConstants::Transparent) {
+                c.mFgColor = mpHost->mHyperlinkFgColor;
+            }
         }
 
         if (mpHost->mMxpClient.hasFgColor()) {
@@ -2277,6 +2308,7 @@ void TBuffer::resetColors()
     pHost->mLightMagenta = Qt::magenta;
     pHost->mWhite = Qt::lightGray;
     pHost->mLightWhite = Qt::white;
+    pHost->mHyperlinkFgColor = QColorConstants::Transparent;
 
     // This will refresh the "main" console as it is only this class instance
     // associated with that one that will call this method from the

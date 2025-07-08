@@ -18,3 +18,14 @@ Project structure:
         TODO
 
 Current unit tests status: [![Build Status](https://travis-ci.org/vadi2/mudlet-lua.png?branch=master)](https://travis-ci.org/vadi2/mudlet-lua)
+
+MXP events
+----------
+
+`mxp.send` events now include a `caption` field with the text between the SEND tags.
+
+The `caption` is available via `mxp.send.caption` and contains the plain text
+displayed when hovering over the element. Commands triggered by the SEND
+element continue to be listed in `mxp.send.actions`, while the optional `href`
+attribute is stored in `mxp.send.href` if present. The nested
+`actions.caption` field that previously held this text no longer exists.

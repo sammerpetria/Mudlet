@@ -2826,6 +2826,15 @@ void TTextEdit::keyPressEvent(QKeyEvent* event)
         // if not command line ignore
     }        
 
+    if (!(event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) && !event->text().isEmpty() && event->text().front().isPrint()) {
+        mpHost->setCaretEnabled(false);
+        mpHost->setFocusOnHostActiveCommandLine();
+        QKeyEvent newEvent(
+    event->type(), event->key(), event->modifiers(), event->text(), event->isAutoRepeat(), event->count());
+        qApp->sendEvent(mpConsole->mpCommandLine, &newEvent);
+        return;
+    }
+
     qsizetype newCaretLine = -1;
     qsizetype newCaretColumn = -1;
 

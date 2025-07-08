@@ -1591,6 +1591,98 @@ int TLuaInterpreter::getMudletHomeDir(lua_State* L)
     return 1;
 }
 
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#enableHyperlinkUnderline
+int TLuaInterpreter::enableHyperlinkUnderline(lua_State* L)
+{
+    const bool enabled = getVerifiedBool(L, __func__, 1, "enabled");
+    Host& host = getHostFromLua(L);
+    host.setUnderlineHyperlinks(enabled);
+    return 0;
+}
+
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#setHyperlinkStyle
+int TLuaInterpreter::setHyperlinkStyle(lua_State* L)
+{
+    static const QStringList styles{"none", "underline", "bold", "italic"};
+    const QString style = getVerifiedString(L, __func__, 1, "style").toLower();
+    if (!styles.contains(style)) {
+        return warnArgumentValue(L, __func__,
+                                 qsl("invalid hyperlink style '%1', expected one of '%2'")
+                                     .arg(style, styles.join(qsl("\", \""))));
+    }
+
+    Host& host = getHostFromLua(L);
+    if (style == qsl("none")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::None);
+    } else if (style == qsl("underline")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+    } else if (style == qsl("bold")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+    } else if (style == qsl("italic")) {
+        host.setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+    }
+
+    return 0;
+}
+
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#getHyperlinkStyle
+int TLuaInterpreter::getHyperlinkStyle(lua_State* L)
+{
+    const Host& host = getHostFromLua(L);
+    switch (host.getHyperlinkStyle()) {
+    case Host::HyperlinkStyle::None:
+        lua_pushstring(L, "none");
+        break;
+    case Host::HyperlinkStyle::Underline:
+        lua_pushstring(L, "underline");
+        break;
+    case Host::HyperlinkStyle::Bold:
+        lua_pushstring(L, "bold");
+        break;
+    case Host::HyperlinkStyle::Italic:
+        lua_pushstring(L, "italic");
+        break;
+    }
+    return 1;
+}
+
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#setHyperlinkStyleColor
+int TLuaInterpreter::setHyperlinkStyleColor(lua_State* L)
+{
+    auto validRange = [](int number) { return number >= 0 && number <= 255; };
+
+    const int r = getVerifiedInt(L, __func__, 1, "red value");
+    if (!validRange(r)) {
+        return warnArgumentValue(L, __func__, csmInvalidRedValue.arg(r));
+    }
+
+    const int g = getVerifiedInt(L, __func__, 2, "green value");
+    if (!validRange(g)) {
+        return warnArgumentValue(L, __func__, csmInvalidGreenValue.arg(g));
+    }
+
+    const int b = getVerifiedInt(L, __func__, 3, "blue value");
+    if (!validRange(b)) {
+        return warnArgumentValue(L, __func__, csmInvalidBlueValue.arg(b));
+    }
+
+    Host& host = getHostFromLua(L);
+    host.mHyperlinkFgColor = QColor(r, g, b);
+
+    return 0;
+}
+
+// Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#getHyperlinkStyleColor
+int TLuaInterpreter::getHyperlinkStyleColor(lua_State* L)
+{
+    const Host& host = getHostFromLua(L);
+    const QColor c = host.mHyperlinkFgColor;
+    lua_pushnumber(L, c.red());
+    lua_pushnumber(L, c.green());
+    lua_pushnumber(L, c.blue());
+    return 3;
+}
+
 // No documentation available in wiki - internal function used by printError in DebugTools.lua
 int TLuaInterpreter::errorc(lua_State* L)
 {
@@ -3435,7 +3527,7 @@ void TLuaInterpreter::setAtcpTable(const QString& var, const QString& arg)
 }
 
 // No documentation available in wiki - internal function
-void TLuaInterpreter::signalMXPEvent(const QString &type, const QMap<QString, QString> &attrs, const QStringList &actions)
+void TLuaInterpreter::signalMXPEvent(const QString &type, const QMap<QString, QString> &attrs, const QStringList &actions, const QString &caption)
 {
     lua_State *L = pGlobalLua;
     lua_getglobal(L, "mxp");
@@ -3471,6 +3563,10 @@ void TLuaInterpreter::signalMXPEvent(const QString &type, const QMap<QString, QS
         lua_pushstring(L, actions[i].toUtf8().constData());
         lua_rawseti(L, -2, i + 1);
     }
+    lua_pop(L, 1);
+
+    lua_pushstring(L, caption.toUtf8().constData());
+    lua_setfield(L, -2, "caption");
 
     lua_pop(L, lua_gettop(L));
 
@@ -5242,6 +5338,11 @@ void TLuaInterpreter::initLuaGlobals()
     lua_register(pGlobalLua, "disableHorizontalScrollBar", TLuaInterpreter::disableHorizontalScrollBar);
     lua_register(pGlobalLua, "enableCommandLine", TLuaInterpreter::enableCommandLine);
     lua_register(pGlobalLua, "disableCommandLine", TLuaInterpreter::disableCommandLine);
+    lua_register(pGlobalLua, "enableHyperlinkUnderline", TLuaInterpreter::enableHyperlinkUnderline);
+    lua_register(pGlobalLua, "setHyperlinkStyle", TLuaInterpreter::setHyperlinkStyle);
+    lua_register(pGlobalLua, "getHyperlinkStyle", TLuaInterpreter::getHyperlinkStyle);
+    lua_register(pGlobalLua, "setHyperlinkStyleColor", TLuaInterpreter::setHyperlinkStyleColor);
+    lua_register(pGlobalLua, "getHyperlinkStyleColor", TLuaInterpreter::getHyperlinkStyleColor);
     lua_register(pGlobalLua, "startLogging", TLuaInterpreter::startLogging);
     lua_register(pGlobalLua, "appendLog", TLuaInterpreter::appendLog);
     lua_register(pGlobalLua, "calcFontSize", TLuaInterpreter::calcFontSize);
@@ -7480,6 +7581,35 @@ int TLuaInterpreter::setConfig(lua_State * L)
         host.setCommandLineHistorySaveSize(value);
         return success();
     }
+    if (key == qsl("hyperlinkStyle")) {
+        static const QStringList styles{"none", "underline", "bold", "italic"};
+        const auto value = getVerifiedString(L, __func__, 2, "value").toLower();
+
+        if (!styles.contains(value)) {
+            lua_pushnil(L);
+            lua_pushfstring(L,
+                           "invalid hyperlinkStyle string \"%s\", it should be one of \"%s\"",
+                           lua_tostring(L, 2), styles.join(qsl("\", \"")).toUtf8().constData());
+            return 2;
+        }
+
+        if (value == qsl("none")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::None);
+        } else if (value == qsl("underline")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Underline);
+        } else if (value == qsl("bold")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Bold);
+        } else if (value == qsl("italic")) {
+            host.setHyperlinkStyle(Host::HyperlinkStyle::Italic);
+        }
+
+        return success();
+    }
+    if (key == qsl("underlineHyperlinks")) {
+        const bool value = getVerifiedBool(L, __func__, 2, "value");
+        host.setUnderlineHyperlinks(value);
+        return success();
+    }
     if (key == qsl("controlCharacterHandling")) {
         static const QStringList values{"asis", "oem", "picture"};
         const auto value = getVerifiedString(L, __func__, 2, "value");
@@ -7624,6 +7754,23 @@ int TLuaInterpreter::getConfig(lua_State *L)
             }
         } },
         { qsl("commandLineHistorySaveSize"), [&](){ lua_pushnumber(L, host.getCommandLineHistorySaveSize()); } },
+        { qsl("hyperlinkStyle"), [&](){
+            switch (host.getHyperlinkStyle()) {
+            case Host::HyperlinkStyle::None:
+                lua_pushstring(L, "none");
+                break;
+            case Host::HyperlinkStyle::Underline:
+                lua_pushstring(L, "underline");
+                break;
+            case Host::HyperlinkStyle::Bold:
+                lua_pushstring(L, "bold");
+                break;
+            case Host::HyperlinkStyle::Italic:
+                lua_pushstring(L, "italic");
+                break;
+            }
+        } },
+        { qsl("underlineHyperlinks"), [&](){ lua_pushboolean(L, host.getUnderlineHyperlinks()); } },
         { qsl("controlCharacterHandling"), [&](){
             const auto controlCharacterMode = host.getControlCharacterMode();
             switch (controlCharacterMode) {

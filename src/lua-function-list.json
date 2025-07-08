@@ -124,6 +124,7 @@
     "enableAlias": "enableAlias(name)",
     "enableClickthrough": "enableClickthrough(label)",
     "enableCommandLine": "enableCommandLine(windowName)",
+    "enableHyperlinkUnderline": "enableHyperlinkUnderline(enabled)",
     "enableHorizontalScrollBar": "enableHorizontalScrollBar([windowName])",
     "enableKey": "enableKey(name)",
     "enableMapInfo": "enableMapInfo(label)",

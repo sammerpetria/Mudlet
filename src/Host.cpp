@@ -320,6 +320,8 @@ Host::Host(int port, const QString& hostname, const QString& login, const QStrin
 , mPlayerRoomInnerDiameterPercentage(70)
 , mDebugShowAllProblemCodepoints(false)
 , mCompactInputLine(false)
+, mHyperlinkStyle(HyperlinkStyle::Underline)
+, mHyperlinkFgColor(QColorConstants::Transparent)
 {
     TDebug::addHost(this, mHostName);
     setDisplayFont(QFont(qsl("Bitstream Vera Sans Mono"), 14, QFont::Normal));
@@ -3098,6 +3100,11 @@ void Host::setCompactInputLine(const bool state)
             mpConsole->mpButtonMainLayer->setVisible(!state);
         }
     }
+}
+
+void Host::setHyperlinkStyle(HyperlinkStyle style)
+{
+    mHyperlinkStyle = style;
 }
 
 QPointer<TConsole> Host::findConsole(QString name)

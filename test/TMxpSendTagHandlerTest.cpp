@@ -265,6 +265,36 @@ private slots:
         QCOMPARE(stub.mHints[1], "BUY SUSPENDERS30901");
     }
 
+    void testCaptionStored() {
+        TMxpStubContext ctx;
+        TMxpStubClient stub;
+
+        auto startTag = parseNode("<SEND href=\"look\">");
+        auto endTag = parseNode("</SEND>");
+
+        TMxpSendTagHandler handler;
+        TMxpTagHandler& tagHandler = handler;
+        tagHandler.handleTag(ctx, stub, startTag->asStartTag());
+        tagHandler.handleContent("room");
+        tagHandler.handleTag(ctx, stub, endTag->asEndTag());
+
+        QCOMPARE(handler.currentCaption(), "room");
+    }
+
+    void testCaptionWithControlCodes() {
+        TMxpStubClient stub;
+        TMxpProcessor processor(&stub);
+
+        std::string input = "\x1B[1z<send href='cmd'>TEXT</send>\x1B[7z";
+        for (char &ch : input) {
+            processor.processMxpInput(ch, true);
+        }
+
+        QCOMPARE(stub.mHrefs.size(), 1);
+        QCOMPARE(stub.mHrefs[0], "send([[cmd]])");
+        QCOMPARE(stub.lastCaption, "TEXT");
+    }
+
 };
 
 #include "TMxpSendTagHandlerTest.moc"

@@ -132,7 +132,7 @@ public:
 
     void setCaptionForSendEvent(const QString& caption) override;
 
-    QStack<TMxpEvent> mPendingSendEvents;
+    QStack<int> mSendEventIndices;
 
 private:
     Host* mpHost;

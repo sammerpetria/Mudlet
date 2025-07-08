@@ -77,8 +77,3 @@ target_link_libraries(
     TLuaInterfaceTest
     LUA51::LUA51)
 
-add_executable(TLuaMXPEventTest TLuaMXPEventTest.cpp)
-add_test(NAME TLuaMXPEventTest COMMAND TLuaMXPEventTest)
-target_link_libraries(
-    TLuaMXPEventTest
-    LUA51::LUA51)

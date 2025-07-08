@@ -29,3 +29,5 @@ displayed when hovering over the element. Commands triggered by the SEND
 element continue to be listed in `mxp.send.actions`, while the optional `href`
 attribute is stored in `mxp.send.href` if present. The nested
 `actions.caption` field that previously held this text no longer exists.
+For additional details, see the
+[official MXP documentation](https://wiki.mudlet.org/w/Manual:Lua_Functions#mxp.send).

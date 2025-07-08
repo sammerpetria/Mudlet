@@ -3563,6 +3563,7 @@ void TLuaInterpreter::signalMXPEvent(const QString &type, const QMap<QString, QS
         lua_pushstring(L, actions[i].toUtf8().constData());
         lua_rawseti(L, -2, i + 1);
     }
+    lua_pop(L, 1);
 
     lua_pushstring(L, caption.toUtf8().constData());
     lua_setfield(L, -2, "caption");

@@ -60,7 +60,7 @@ const QString TConsole::cmLuaLineVariable("line");
 TConsole::TConsole(Host* pH, const QString& name, const ConsoleType type, QWidget* parent)
 : QWidget(parent)
 , mpHost(pH)
-, mDisplayFontDetails((type == MainConsole) && pH->fontsAntiAlias())
+, mDisplayFontDetails(pH->fontsAntiAlias())
 , buffer(pH, this)
 , emergencyStop(new QToolButton)
 , mConsoleName(name)
@@ -857,7 +857,9 @@ void TConsole::slot_toggleReplayRecording()
             dirLogFile.mkpath(directoryLogFile);
         }
         mReplayFile.setFileName(mLogFileName);
-        mReplayFile.open(QIODevice::WriteOnly);
+        if (!mReplayFile.open(QIODevice::WriteOnly)) {
+            qWarning() << "TConsole: failed to open replay file for writing:" << mReplayFile.errorString();
+        }
         if (mudlet::scmRunTimeQtVersion >= QVersionNumber(5, 13, 0)) {
             mReplayStream.setVersion(mudlet::scmQDataStreamFormat_5_12);
         }
@@ -1342,7 +1344,7 @@ QPair<quint8, TChar> TConsole::getTextAttributes() const
     const QPoint beginPoint = P_begin;
     const QPoint endPoint = P_end;
     const QPoint userCursorPoint = mUserCursor;
-    
+
     int x = beginPoint.x();
     int y = beginPoint.y();
 
@@ -1354,7 +1356,7 @@ QPair<quint8, TChar> TConsole::getTextAttributes() const
 
     // Take a snapshot of buffer size to avoid TOCTOU issues
     const int bufferSize = static_cast<int>(buffer.buffer.size());
-    
+
     // Early bounds check
     if (y < 0 || x < 0 || y >= bufferSize) {
         return qMakePair(2, TChar());
@@ -1363,7 +1365,7 @@ QPair<quint8, TChar> TConsole::getTextAttributes() const
     // Get line reference and check its bounds safely
     const auto& line = buffer.buffer.at(y);
     const int lineSize = static_cast<int>(line.size());
-    
+
     if (x >= lineSize) {
         return qMakePair(2, TChar());
     }
@@ -2567,7 +2569,10 @@ void TConsole::slot_toggleTimeStamps(const bool state)
         const auto filePath = mudlet::getMudletPath(enums::profileDataItemPath, mpHost->getName(), qsl("autotimestamp"));
         QSaveFile file(filePath);
         if (state) {
-            file.open(QIODevice::WriteOnly | QIODevice::Text);
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                qWarning() << "TConsole: failed to open autotimestamp file for writing:" << file.errorString();
+                return;
+            }
             QTextStream out(&file);
             if (!file.commit()) {
                 qDebug() << "TConsole::slot_toggleTimeStamps: error saving timestamp state: " << file.errorString();

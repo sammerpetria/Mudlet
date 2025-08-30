@@ -658,7 +658,7 @@ void TBuffer::translateToPlainText(std::string& incoming, const bool isFromServe
             // because we already know that the localBuffer extends backwards
             // that far (it will be the ']' character!)
             while (spanEnd < localBufferLength
-                   && (localBuffer[spanEnd-1] != '\033')
+                   && (spanEnd == 0 || localBuffer[spanEnd-1] != '\033')
                    && (localBuffer[spanEnd] != '\\')) {
                 ++spanEnd;
             }
@@ -2561,13 +2561,21 @@ inline int TBuffer::skipSpacesAtBeginOfLine(const int row, const int column)
 }
 
 // find lindbreaks and indents (if not necessary, return empty list)
-inline QList<WrapInfo> TBuffer::getWrapInfo(const QString& lineText, bool isNewline, 
+inline QList<WrapInfo> TBuffer::getWrapInfo(const QString& lineText, bool isNewline,
     const int maxWidth, const int indent, const int hangingIndent)
 {
     QList<WrapInfo> output;
     if (lineText.isEmpty()) {
         return output;
     }
+    
+    // Safety check: during destruction, mpHost might be null
+    if (!mpHost) {
+        // Return a simple wrap info without character width calculations
+        output.append(WrapInfo(isNewline, false, 0, lineText.length()));
+        return output;
+    }
+    
     QTextBoundaryFinder boundaryFinder(QTextBoundaryFinder::Grapheme, lineText);
     QTextBoundaryFinder lineBreakFinder(QTextBoundaryFinder::Line, lineText);
     int xPos = 0;
@@ -2598,14 +2606,16 @@ inline QList<WrapInfo> TBuffer::getWrapInfo(const QString& lineText, bool isNewl
         int nextBoundary = boundaryFinder.toNextBoundary();
         const QString grapheme = lineText.mid(indexOfChar, nextBoundary - indexOfChar);
         const uint unicode = graphemeInfo::getBaseCharacter(grapheme);
-        const int charWidth = graphemeInfo::getWidth(unicode, mpHost->wideAmbiguousEAsianGlyphs());
+        // Safety check: during destruction, mpHost might be null
+        const int charWidth = mpHost ? graphemeInfo::getWidth(unicode, mpHost->wideAmbiguousEAsianGlyphs()) 
+                                     : graphemeInfo::getWidth(unicode, false);
         const int indentationHere = isNewline ? indent : hangingIndent;
         if (xPos + charWidth > maxWidth - (needsIndent ? indentationHere : 0)) {
             if (isNewline) {
                 needsIndent = true;
             }
             lineBreakFinder.setPosition(indexOfChar);
-            // we check c == QChar::Space since we are happy to break at -any- space, 
+            // we check c == QChar::Space since we are happy to break at -any- space,
             // unlike the indirect-linebreak permission of QTextBoundaryFinder::Line
             // (see: https://www.unicode.org/reports/tr14/#LD9) which will only break at
             // at the first char after 1+ space(s)
@@ -2740,7 +2750,7 @@ int TBuffer::wrapLine(int startLine, int maxWidth, int indentSize, int hangingIn
         const QString lineText = lineBuffer[i];
         // a blank timestamp indicates a wrapped line
         const bool isNewline = (time != mudlet::smBlankTimeStamp);
-        QList<WrapInfo> lineBreaks = getWrapInfo(lineText, isNewline, maxWidth, indent, hangingIndent); 
+        QList<WrapInfo> lineBreaks = getWrapInfo(lineText, isNewline, maxWidth, indent, hangingIndent);
         if (lineBreaks.isEmpty()) {
             tempList.append(lineText);
             queue.push(buffer[i]);

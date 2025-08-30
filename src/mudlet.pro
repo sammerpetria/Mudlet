@@ -37,7 +37,13 @@
 ############################################################################
 
 if(lessThan(QT_MAJOR_VERSION,6)) {
-    error("Mudlet requires Qt 6.0 or later")
+    error("Mudlet requires Qt 6.8.2 or later")
+}
+if(equals(QT_MAJOR_VERSION,6):lessThan(QT_MINOR_VERSION,8)) {
+    error("Mudlet requires Qt 6.8.2 or later")
+}
+if(equals(QT_MAJOR_VERSION,6):equals(QT_MINOR_VERSION,8):lessThan(QT_PATCH_VERSION,2)) {
+    error("Mudlet requires Qt 6.8.2 or later")
 }
 
 # Including IRC Library
@@ -239,6 +245,22 @@ isEmpty( 3DMAPPER_TEST ) | !equals(3DMAPPER_TEST, "NO" ) {
     DEFINES += INCLUDE_3DMAPPER
 }
 
+######################### Shader hot-reload toggle ############################
+# To enable shader hot-reloading, set the environment WITH_SHADER_HOT_RELOAD variable to "YES"
+# ie: export WITH_SHADER_HOT_RELOAD="YES" qmake
+#
+SHADER_HOT_RELOAD_TEST = $$upper($$(WITH_SHADER_HOT_RELOAD))
+equals(SHADER_HOT_RELOAD_TEST, "YES" ) {
+    DEFINES += USE_SHADER_HOT_RELOAD
+    !build_pass{
+        message("Shader hot-reloading is enabled in this configuration")
+    }
+} else {
+    !build_pass{
+        message("Shader hot-reloading is disabled in this configuration")
+    }
+}
+
 ######################## System QtKeyChain library #############################
 # To use a system provided QtKeyChain library set the environmental variable
 # WITH_OWN_QTKEYCHAIN variable to "NO". Note that this is only likely to be
@@ -321,6 +343,10 @@ DEFINES+=DEBUG_TELNET=1
 # * Enable the features associated with reporting problems in processing Unicode
 # codepoints that cannot be displayed on screen in a `TConsole`:
 # DEFINES+=DEBUG_CODEPOINT_PROBLEMS
+#
+# * Produce qDebug() messages about window handling operations like dock widget
+# transfers, profile switching, and detached window management:
+# DEFINES+=DEBUG_WINDOW_HANDLING
 
 unix:!macx {
 # Distribution packagers would be using PREFIX = /usr but this is accepted
@@ -585,7 +611,6 @@ SOURCES += \
     ActionUnit.cpp \
     AliasUnit.cpp \
     AltFocusMenuBarDisable.cpp \
-    DarkTheme.cpp \
     ctelnet.cpp \
     discord.cpp \
     dlgAboutDialog.cpp \
@@ -633,6 +658,8 @@ SOURCES += \
     MudletInstanceCoordinator.cpp \
     MxpTag.cpp \
     ScriptUnit.cpp \
+    SecureStringUtils.cpp \
+    CredentialManager.cpp \
     ShortcutsManager.cpp \
     SingleLineTextEdit.cpp \
     T2DMap.cpp \
@@ -716,11 +743,9 @@ HEADERS += \
     ../3rdparty/discord/rpc/include/discord_register.h \
     ../3rdparty/discord/rpc/include/discord_rpc.h \
     ActionUnit.h \
-    Announcer.h \
     AliasUnit.h \
     AltFocusMenuBarDisable.h \
     ctelnet.h \
-    DarkTheme.h \
     discord.h \
     dlgAboutDialog.h \
     dlgActionMainArea.h \
@@ -767,6 +792,8 @@ HEADERS += \
     pre_guard.h \
     post_guard.h \
     ScriptUnit.h \
+    SecureStringUtils.h \
+    CredentialManager.h \
     ShortcutsManager.h \
     SingleLineTextEdit.h \
     T2DMap.h \
@@ -852,22 +879,6 @@ HEADERS += \
     ../3rdparty/discord/rpc/include/discord_register.h \
     ../3rdparty/discord/rpc/include/discord_rpc.h
 
-macx|win32 {
-    macx {
-        SOURCES += AnnouncerMac.mm
-    }
-
-    win32 {
-        SOURCES += AnnouncerWindows.cpp \
-            uiawrapper.cpp
-
-        HEADERS += uiawrapper.h
-    }
-} else {
-    # Everything else
-    SOURCES += \
-        AnnouncerUnix.cpp
-}
 
 # This is for compiled UI files, not those used at runtime through the resource file.
 FORMS += \
@@ -950,17 +961,39 @@ linux|macx|win32 {
 
 
 contains( DEFINES, INCLUDE_3DMAPPER ) {
-    HEADERS += glwidget.h
-    SOURCES += glwidget.cpp
+    HEADERS += glwidget.h \
+               modern_glwidget.h \
+               glwidget_integration.h \
+               CameraController.h \
+               GeometryManager.h \
+               RenderCommand.h \
+               RenderCommandQueue.h \
+               ResourceManager.h \
+               ShaderManager.h
+    SOURCES += glwidget.cpp \
+               modern_glwidget.cpp \
+               glwidget_integration.cpp \
+               CameraController.cpp \
+               GeometryManager.cpp \
+               RenderCommand.cpp \
+               RenderCommandQueue.cpp \
+               ResourceManager.cpp \
+               ShaderManager.cpp
+    
+    # Enable shader hot-reloading when USE_SHADER_HOT_RELOAD is defined
+    contains( DEFINES, USE_SHADER_HOT_RELOAD ) {
+        DEFINES += MUDLET_SHADER_HOT_RELOAD=1
+    }
+    
+    !build_pass{
+        message("The 3D mapper code with both OpenGL implementations is included in this configuration for runtime selection")
+    }
+    
     QT += opengl
 
     win32 {
         LIBS += -lopengl32 \
                 -lglu32
-    }
-
-    !build_pass{
-        message("The 3D mapper code is included in this configuration")
     }
 } else {
     !build_pass{
@@ -1618,22 +1651,21 @@ win32 {
 # This is a list of files that we want to show up in the Qt Creator IDE that are
 # not otherwise used by the main project:
 OTHER_FILES += \
+    ../.ai/ai-instructions.md \
     ../.crowdin.yml \
+    ../.cursorrules \
     ../.devcontainer/Dockerfile \
     ../.devcontainer/devcontainer.json \
     ../.devcontainer/library-scripts/desktop-lite-debian.sh \
-    ../.github/CODE_OF_CONDUCT.md \
     ../.github/CODEOWNERS \
     ../.github/codeql/codeql-config.yml \
     ../.github/codespell-wordlist.txt \
-    ../.github/CONTRIBUTING.md \
+    ../.github/copilot-instructions.md \
     ../.github/dependabot.yml \
-    ../.github/FUNDING.yml \
     ../.github/ISSUE_TEMPLATE.md \
     ../.github/pr-labeler.yml \
     ../.github/PULL_REQUEST_TEMPLATE.md \
     ../.github/repo-metadata.yml \
-    ../.github/SUPPORT.md \
     ../.github/workflows/build-mudlet.yml \
     ../.github/workflows/build-mudlet-win.yml \
     ../.github/workflows/clangtidy-diff-analysis.yml \
@@ -1653,6 +1685,8 @@ OTHER_FILES += \
     ../.github/workflows/update-geyser-docs.yml \
     ../.github/workflows/update-translations.yml \
     ../.gitignore \
+    ../AGENTS.md \
+    ../CLAUDE.md \
     ../CI/build-mudlet-for-windows.sh \
     ../CI/deploy-mudlet-for-windows.sh \
     ../CI/fix.grid.ui.ordering.js \
@@ -1681,8 +1715,15 @@ OTHER_FILES += \
     ../docker/docker-compose.override.linux.yml \
     ../docker/docker-compose.yml \
     ../docker/Dockerfile \
+    ../docs/AI-ASSISTANTS.md \
+    ../docs/CODE_OF_CONDUCT.md \
+    ../docs/CONTRIBUTING.md \
+    ../docs/FUNDING.yml \
+    ../docs/SUPPORT.md \
     ../test/CMakeLists.txt \
     ../test/GUIConsoleTests.mpackage \
+    ../test/CredentialManagerTest.cpp \
+    ../test/SecureStringUtilsTest.cpp \
     ../test/TEntityHandlerTest.cpp \
     ../test/TEntityResolverTest.cpp \
     ../test/TLinkStoreTest.cpp \

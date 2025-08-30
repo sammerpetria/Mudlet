@@ -44,7 +44,7 @@
 #include "dlgMapper.h"
 #include "mudlet.h"
 #if defined(INCLUDE_3DMAPPER)
-#include "glwidget.h"
+#include "glwidget_integration.h"
 #endif
 
 #include "pre_guard.h"
@@ -109,16 +109,16 @@ cTelnet::cTelnet(Host* pH, const QString& profileName)
     QTimer::singleShot(0, this, [this]() {
 #if !defined(QT_NO_SSL)
         if (mpHost->mSslTsl) {
-            connect(&socket, &QSslSocket::encrypted, this, &cTelnet::slot_socketConnected);
+            connect(&mpSocket, &QSslSocket::encrypted, this, &cTelnet::slot_socketConnected);
         } else {
-            connect(&socket, &QAbstractSocket::connected, this, &cTelnet::slot_socketConnected);
+            connect(&mpSocket, &QAbstractSocket::connected, this, &cTelnet::slot_socketConnected);
         }
-        connect(&socket, qOverload<const QList<QSslError>&>(&QSslSocket::sslErrors), this, &cTelnet::slot_socketSslError);
+        connect(&mpSocket, qOverload<const QList<QSslError>&>(&QSslSocket::sslErrors), this, &cTelnet::slot_socketSslError);
 #else
-        connect(&socket, &QAbstractSocket::connected, this, &cTelnet::slot_socketConnected);
+        connect(&mpSocket, &QAbstractSocket::connected, this, &cTelnet::slot_socketConnected);
 #endif
-        connect(&socket, &QAbstractSocket::disconnected, this, &cTelnet::slot_socketDisconnected);
-        connect(&socket, &QIODevice::readyRead, this, &cTelnet::slot_socketReadyToBeRead);
+        connect(&mpSocket, &QAbstractSocket::disconnected, this, &cTelnet::slot_socketDisconnected);
+        connect(&mpSocket, &QIODevice::readyRead, this, &cTelnet::slot_socketReadyToBeRead);
     });
 
 
@@ -165,9 +165,6 @@ void cTelnet::reset()
 
 cTelnet::~cTelnet()
 {
-    // Set flag to prevent any further access to Host/Console during destruction
-    mIsBeingDestroyed = true;
-    
     // Stop all timers immediately
     if (mTimerLogin) {
         mTimerLogin->stop();
@@ -178,19 +175,19 @@ cTelnet::~cTelnet()
     if (mpPostingTimer) {
         mpPostingTimer->stop();
     }
-    
+
     // Aggressively disconnect the socket to prevent signals during destruction
-    if (socket.state() != QAbstractSocket::UnconnectedState) {
+    if (mpSocket.state() != QAbstractSocket::UnconnectedState) {
         // Block all signals from the socket first
-        socket.blockSignals(true);
-        socket.disconnectFromHost();
+        mpSocket.blockSignals(true);
+        mpSocket.disconnectFromHost();
         // Force immediate closure without waiting
-        socket.abort();
+        mpSocket.abort();
     }
-    
+
     // Disconnect all signal connections to prevent callbacks during destruction
     disconnect();
-    
+
     if (loadingReplay) {
         // If we are doing a replay we had better abort it so that if we are
         // NOT the "last profile standing" the replay system gets reset for
@@ -222,7 +219,7 @@ cTelnet::~cTelnet()
     if (mpComposer) {
         mpComposer->deleteLater();
     }
-    socket.deleteLater();
+    mpSocket.deleteLater();
 }
 
 void cTelnet::cancelLoginTimers()
@@ -302,23 +299,23 @@ void cTelnet::encodingChanged(const QByteArray& requestedEncoding)
 #if !defined(QT_NO_SSL)
 QSslCertificate cTelnet::getPeerCertificate()
 {
-    return socket.peerCertificate();
+    return mpSocket.peerCertificate();
 }
 
 QList<QSslError> cTelnet::getSslErrors()
 {
-    return socket.sslHandshakeErrors();
+    return mpSocket.sslHandshakeErrors();
 }
 #endif
 
 QAbstractSocket::SocketError cTelnet::error()
 {
-    return socket.error();
+    return mpSocket.error();
 }
 
 QString cTelnet::errorString()
 {
-    return socket.errorString();
+    return mpSocket.errorString();
 }
 
 // newEncoding must be EITHER: one of the FIXED non-translatable values in
@@ -417,24 +414,24 @@ void cTelnet::connectIt(const QString& address, int port)
 
         if (mpHost->mUseProxy && !mpHost->mProxyAddress.isEmpty() && mpHost->mProxyPort != 0) {
             auto& proxy = mpHost->getConnectionProxy();
-            socket.setProxy(*proxy);
+            mpSocket.setProxy(*proxy);
             mConnectViaProxy = true;
         } else {
-            socket.setProxy(QNetworkProxy::DefaultProxy);
+            mpSocket.setProxy(QNetworkProxy::DefaultProxy);
             mConnectViaProxy = false;
         }
     }
 
-    if (socket.state() != QAbstractSocket::UnconnectedState) {
-        socket.abort();
+    if (mpSocket.state() != QAbstractSocket::UnconnectedState) {
+        mpSocket.abort();
         connectIt(address, port);
         return;
     }
 
     emit signal_connecting(mpHost);
 
-    hostName = address;
-    hostPort = port;
+    mHostName = address;
+    mHostPort = port;
     postMessage(tr("[ INFO ]  - Looking up the IP address of server: %1:%2 ...").arg(address, QString::number(port)));
     // don't use a compile-time slot for this: https://bugreports.qt.io/browse/QTBUG-67646
     QHostInfo::lookupHost(address, this, SLOT(slot_socketHostFound(QHostInfo)));
@@ -444,30 +441,30 @@ void cTelnet::reconnect()
 {
     // if we've connected offline and wish to reconnect, the last
     // connection parameters aren't yet set
-    if (hostName.isEmpty() && hostPort == 0) {
+    if (mHostName.isEmpty() && mHostPort == 0) {
         connectIt(mpHost->getUrl(), mpHost->getPort());
     } else {
-        connectIt(hostName, hostPort);
+        connectIt(mHostName, mHostPort);
     }
 }
 
 void cTelnet::disconnectIt()
 {
     mDontReconnect = true;
-    socket.disconnectFromHost();
+    mpSocket.disconnectFromHost();
 
 }
 
 void cTelnet::abortConnection()
 {
     mDontReconnect = true;
-    socket.abort();
+    mpSocket.abort();
 }
 
 // Not used:
 //void cTelnet::slot_socketError()
 //{
-//    QString err = tr("[ ERROR ] - TCP/IP socket ERROR:") % socket.errorString();
+//    QString err = tr("[ ERROR ] - TCP/IP socket ERROR:") % mpSocket.errorString();
 //    postMessage(err);
 //}
 
@@ -487,16 +484,16 @@ void cTelnet::slot_send_pass()
 
 void cTelnet::slot_socketConnected()
 {
-    // Check if we're being destroyed or if Host is null/invalid
-    if (mIsBeingDestroyed || !mpHost) {
-        qDebug() << "cTelnet::slot_socketConnected() - Aborting due to destruction in progress or null Host";
+    // Check if Host is closing down or null/invalid
+    if (!mpHost || mpHost->isClosingDown()) {
+        qDebug() << "cTelnet::slot_socketConnected() - Aborting due to Host shutdown in progress or null Host";
         return;
     }
 
     QString msg;
 
     reset();
-    setKeepAlive(socket.socketDescriptor());
+    setKeepAlive(mpSocket.socketDescriptor());
 
     if (mpHost->mSslTsl)
     {
@@ -529,9 +526,9 @@ void cTelnet::slot_socketDisconnected()
     QString spacer = "    ";
     bool sslerr = false;
 
-    // Check if we're being destroyed or if Host is null/invalid
-    if (mIsBeingDestroyed || !mpHost) {
-        qDebug() << "cTelnet::slot_socketDisconnected() - Aborting due to destruction in progress or null Host";
+    // Check if Host is closing down or null/invalid
+    if (!mpHost || mpHost->isClosingDown()) {
+        qDebug() << "cTelnet::slot_socketDisconnected() - Aborting due to Host shutdown in progress or null Host";
         return;
     }
 
@@ -540,7 +537,7 @@ void cTelnet::slot_socketDisconnected()
     emit signal_disconnected(mpHost);
 
     // Double-check Host is still valid before raising event
-    if (mpHost && !mIsBeingDestroyed) {
+    if (mpHost && !mpHost->isClosingDown()) {
         event.mArgumentList.append(qsl("sysDisconnectionEvent"));
         event.mArgumentTypeList.append(ARGUMENT_TYPE_STRING);
         mpHost->raiseEvent(event);
@@ -563,7 +560,7 @@ void cTelnet::slot_socketDisconnected()
 
 #if !defined(QT_NO_SSL)
         QList<QSslError> sslErrors = getSslErrors();
-        QSslCertificate cert = socket.peerCertificate();
+        QSslCertificate cert = mpSocket.peerCertificate();
 
         if (mpHost->mSslIgnoreExpired) {
             sslErrors.removeAll(QSslError(QSslError::CertificateExpired, cert));
@@ -586,14 +583,17 @@ void cTelnet::slot_socketDisconnected()
         } else {
 #endif
             if (mDontReconnect) {
-                reason = qsl("User Disconnected");
+                reason = tr("User Disconnected");
+            // successful connection duration under 5s == rejected by server
+            } else if (mConnectionTimer.elapsed() > 0 && mConnectionTimer.elapsed() < 5000) {
+                reason = tr("Connection/login attempt rejected by server");
+            // SocketError(13) == SslHandshakeFailedError (https://doc.qt.io/qt-6/qabstractsocket.html#SocketError-enum)
+            } else if (mpSocket.error() == QAbstractSocket::SocketError(13)) {
+                reason = tr("Secure connections aren't supported by this game on this port - try turning the option off");
             } else {
-                reason = socket.errorString();
+                reason = mpSocket.errorString();
             }
-            if (reason == qsl("Error during SSL handshake: error:140770FC:SSL routines:SSL23_GET_SERVER_HELLO:unknown protocol")) {
-                reason = tr("Secure connections aren't supported by this game on this port - try turning the option off.");
-            }
-            QString err = tr("[ ALERT ] - Socket got disconnected.\nReason: ") % reason;
+            QString err = tr("[ ALERT ] - Socket got disconnected.\nReason: %1.").arg(reason);
             postMessage(err);
         }
         postMessage(msg);
@@ -605,8 +605,8 @@ void cTelnet::slot_socketDisconnected()
     }
 #endif
 
-    if (mAutoReconnect && !mDontReconnect) {
-        connectIt(hostName, hostPort);
+    if (mAutoReconnect && !mDontReconnect && mConnectionTimer.elapsed() >= 5000) {
+        connectIt(mHostName, mHostPort);
     }
     mDontReconnect = false;
 }
@@ -614,12 +614,12 @@ void cTelnet::slot_socketDisconnected()
 #if !defined(QT_NO_SSL)
 void cTelnet::slot_socketSslError(const QList<QSslError>& errors)
 {
-    // Check if we're being destroyed or if Host is null/invalid
-    if (mIsBeingDestroyed || !mpHost) {
+    // Check if Host is closing down or null/invalid
+    if (!mpHost || mpHost->isClosingDown()) {
         return;
     }
 
-    QSslCertificate cert = socket.peerCertificate();
+    QSslCertificate cert = mpSocket.peerCertificate();
     QList<QSslError> ignoreErrorList;
 
     if (mpHost->mSslIgnoreExpired) {
@@ -630,9 +630,9 @@ void cTelnet::slot_socketSslError(const QList<QSslError>& errors)
     }
 
     if (mpHost->mSslIgnoreAll) {
-        socket.ignoreSslErrors(errors);
+        mpSocket.ignoreSslErrors(errors);
     } else {
-        socket.ignoreSslErrors(ignoreErrorList);
+        mpSocket.ignoreSslErrors(ignoreErrorList);
     }
 }
 #endif
@@ -641,22 +641,22 @@ void cTelnet::slot_socketHostFound(QHostInfo hostInfo)
 {
 #if !defined(QT_NO_SSL)
     if (mpHost->mSslTsl) {
-        postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying secure connection to %1: %2 ...").arg(hostInfo.hostName(), QString::number(hostPort))));
-        socket.connectToHostEncrypted(hostInfo.hostName(), hostPort, QIODevice::ReadWrite);
+        postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying secure connection to %1: %2 ...").arg(hostInfo.hostName(), QString::number(mHostPort))));
+        mpSocket.connectToHostEncrypted(hostInfo.hostName(), mHostPort, QIODevice::ReadWrite);
 
     } else {
 #endif
         if (!hostInfo.addresses().isEmpty()) {
             mHostAddress = hostInfo.addresses().constFirst();
-            postMessage(qsl("%1\n").arg(tr("[ INFO ]  - The IP address of %1 has been found. It is: %2").arg(hostName, mHostAddress.toString())));
+            postMessage(qsl("%1\n").arg(tr("[ INFO ]  - The IP address of %1 has been found. It is: %2").arg(mHostName, mHostAddress.toString())));
             if (!mConnectViaProxy) {
-                postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying to connect to %1:%2 ...").arg(mHostAddress.toString(), QString::number(hostPort))));
+                postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying to connect to %1:%2 ...").arg(mHostAddress.toString(), QString::number(mHostPort))));
             } else {
-                postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying to connect to %1:%2 via proxy...").arg(mHostAddress.toString(), QString::number(hostPort))));
+                postMessage(qsl("%1\n").arg(tr("[ INFO ]  - Trying to connect to %1:%2 via proxy...").arg(mHostAddress.toString(), QString::number(mHostPort))));
             }
-            socket.connectToHost(mHostAddress, hostPort);
+            mpSocket.connectToHost(mHostAddress, mHostPort);
         } else {
-            socket.connectToHost(hostInfo.hostName(), hostPort);
+            mpSocket.connectToHost(hostInfo.hostName(), mHostPort);
             postMessage(tr("[ ERROR ] - Host name lookup Failure!\n"
                            "Connection cannot be established.\n"
                            "The server name is not correct, not working properly,\n"
@@ -748,10 +748,10 @@ bool cTelnet::sendData(QString& data, const bool permitDataSendRequestEvent)
 // as we do NOT handle the weirdly different EBDIC!!!
 bool cTelnet::socketOutRaw(std::string& data)
 {
-    // We were using socket.iswritable() but it was not clear that that was a
+    // We were using mpSocket.iswritable() but it was not clear that that was a
     // suitable way to check for an open, usable connection - whereas isvalid()
     // is true if the socket is valid and ready for use:
-    if (!socket.isValid()) {
+    if (!mpSocket.isValid()) {
         return false;
     }
     std::size_t dataLength = data.length();
@@ -762,7 +762,7 @@ bool cTelnet::socketOutRaw(std::string& data)
         // may be ASCII NUL characters in data and the first of those will
         // terminate the writing of the bytes following it in the single
         // argument method call:
-        qint64 chunkWritten = socket.write(data.substr(written).data(), (dataLength - written));
+        qint64 chunkWritten = mpSocket.write(data.substr(written).data(), (dataLength - written));
 
         if (chunkWritten < 0) {
             // -1 is the sentinel (error) value but any other negative value
@@ -836,7 +836,7 @@ void cTelnet::sendNAWS(int width, int height)
     socketOutRaw(message);
 }
 
-void cTelnet::sendTelnetOption(char type, char option)
+void cTelnet::sendTelnetOption(char type, unsigned char option)
 {
 #ifdef DEBUG_TELNET
     QString _type;
@@ -884,7 +884,10 @@ void cTelnet::slot_replyFinished(QNetworkReply* reply)
         }
 
         QSaveFile file(mServerPackage);
-        file.open(QFile::WriteOnly);
+        if (!file.open(QFile::WriteOnly)) {
+            qWarning() << "ctelnet: failed to open file for writing:" << file.errorString();
+            return;
+        }
         file.write(reply->readAll());
         if (!file.commit()) {
             qDebug() << "cTelnet::slot_replyFinished: error downloading package: " << file.errorString();
@@ -907,6 +910,22 @@ void cTelnet::slot_setDownloadProgress(qint64 got, qint64 tot)
 {
     mpProgressDialog->setRange(0, static_cast<int>(tot));
     mpProgressDialog->setValue(static_cast<int>(got));
+}
+
+// Helper to format short telnet commands for debugging
+QString cTelnet::formatShortTelnetCommand(const std::string& telnetCommand, const QString& commandName) const
+{
+    QByteArray cmdBytes(telnetCommand.data(), telnetCommand.size());
+    QString hexStr = cmdBytes.toHex(' ');
+    QString decoded = QString(" (IAC %1").arg(commandName);
+    
+    if (telnetCommand.size() == 2 && !commandName.isEmpty()) {
+        decoded += " <missing option>)";
+    } else {
+        decoded += ")";
+    }
+    
+    return QString("hex: %1%2").arg(hexStr, decoded);
 }
 
 // Helper to identify which protocol is being negotiated!
@@ -1000,12 +1019,12 @@ QString cTelnet::decodeOption(const unsigned char ch) const
 std::tuple<QString, int, bool> cTelnet::getConnectionInfo() const
 {
     // intentionally simplify connection state to a boolean
-    const bool connected = socket.state() == QAbstractSocket::ConnectedState;
+    const bool connected = mpSocket.state() == QAbstractSocket::ConnectedState;
 
-    if (hostName.isEmpty() && hostPort == 0) {
+    if (mHostName.isEmpty() && mHostPort == 0) {
         return {mpHost->getUrl(), mpHost->getPort(), connected};
     } else {
-        return {hostName, hostPort, connected};
+        return {mHostName, mHostPort, connected};
     }
 }
 
@@ -1636,11 +1655,18 @@ void cTelnet::autoEnableMXPProcessor()
 
     // Automatically enable MXP processing
     mpHost->setForceMXPProcessorOn(true);
-    postMessage(tr("[ INFO ]  - This game appears to support MXP (Mud eXtension Protocol), but may not negotiate it. MXP processing has been automatically enabled for clickable links, room info, and richer interactions. You can disable this forced setting in Settings > Special Options."));
+    postMessage(tr("[ INFO ]  - This game appears to support MXP (Mud eXtension Protocol), but hasn't turned it on properly. MXP processing has been automatically enabled for clickable links, room info, and richer interactions. You can disable this setting in Settings > Special Options."));
 }
 
 void cTelnet::processTelnetCommand(const std::string& telnetCommand)
 {
+    // Ensure telnetCommand has sufficient length before accessing indices
+    if (telnetCommand.size() < 2) {
+        QString debugInfo = formatShortTelnetCommand(telnetCommand, QString());
+        qDebug() << "WARNING: telnetCommand too short (size:" << telnetCommand.size() << "), ignoring -" << debugInfo;
+        return;
+    }
+    
     char ch = telnetCommand[1];
 #if defined(DEBUG_TELNET) && (DEBUG_TELNET > 1)
     QString commandType;
@@ -1708,7 +1734,7 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
     }
 #endif
 
-    char option;
+    unsigned char option;
     switch (ch) {
     case TN_GA:
     case TN_EOR: {
@@ -1723,6 +1749,11 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
     }
     case TN_WILL: {
         //server wants to enable some option (or he sends a timing-mark)...
+        if (telnetCommand.size() < 3) {
+            QString debugInfo = formatShortTelnetCommand(telnetCommand, "WILL");
+            qDebug() << "WARNING: TN_WILL command too short (size:" << telnetCommand.size() << "), ignoring -" << debugInfo;
+            return;
+        }
         option = telnetCommand[2];
         trackKaVirNegotiation(option); // Track for KaVir protocol
         const auto idxOption = static_cast<size_t>(option);
@@ -2039,6 +2070,11 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
 
     case TN_WONT: {
         //server refuses to enable some option
+        if (telnetCommand.size() < 3) {
+            QString debugInfo = formatShortTelnetCommand(telnetCommand, "WONT");
+            qDebug() << "WARNING: TN_WONT command too short (size:" << telnetCommand.size() << "), ignoring -" << debugInfo;
+            return;
+        }
         option = telnetCommand[2];
         const auto idxOption = static_cast<size_t>(option);
 #ifdef DEBUG_TELNET
@@ -2134,6 +2170,11 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
 
     case TN_DO: {
         //server wants us to enable some option
+        if (telnetCommand.size() < 3) {
+            QString debugInfo = formatShortTelnetCommand(telnetCommand, "DO");
+            qDebug() << "WARNING: TN_DO command too short (size:" << telnetCommand.size() << "), ignoring -" << debugInfo;
+            return;
+        }
         option = telnetCommand[2];
         trackKaVirNegotiation(option); // Track for KaVir protocol
         const auto idxOption = static_cast<size_t>(option);
@@ -2338,6 +2379,11 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
     }
     case TN_DONT: {
         //only respond if value changed or if this option has not been announced yet
+        if (telnetCommand.size() < 3) {
+            QString debugInfo = formatShortTelnetCommand(telnetCommand, "DONT");
+            qDebug() << "WARNING: TN_DONT command too short (size:" << telnetCommand.size() << "), ignoring -" << debugInfo;
+            return;
+        }
         option = telnetCommand[2];
         const auto idxOption = static_cast<size_t>(option);
 #ifdef DEBUG_TELNET
@@ -2412,6 +2458,10 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
     }
 
     case TN_SB: {
+        if (telnetCommand.size() < 3) {
+            qDebug() << "WARNING: TN_SB command too short (size:" << telnetCommand.size() << "), ignoring";
+            return;
+        }
         option = telnetCommand[2];
 
         // NEW_ENVIRON
@@ -2803,24 +2853,29 @@ void cTelnet::processTelnetCommand(const std::string& telnetCommand)
 
     // raise sysTelnetEvent for all unhandled protocols
     // EXCEPT TN_GA / TN_EOR, which come at the end of every transmission, for performance reasons
-    if (telnetCommand[1] != TN_GA && telnetCommand[1] != TN_EOR) {
-        auto type = static_cast<unsigned char>(telnetCommand[1]);
-        auto telnetOption = static_cast<unsigned char>(telnetCommand[2]);
-        QString msg = telnetCommand.c_str();
-        if (telnetCommand.size() >= 6) {
-            msg = msg.mid(3, telnetCommand.size() - 5);
-        }
+    if (telnetCommand.size() >= 2) {
+        const char* data = telnetCommand.data();
+        if (data[1] != TN_GA && data[1] != TN_EOR) {
+            const auto type = static_cast<unsigned char>(data[1]);
+            // Only access telnetCommand[2] if it exists
+            const auto telnetOption = telnetCommand.size() > 2 ? static_cast<unsigned char>(data[2]) : 0;
+            QString msg = telnetCommand.c_str();
+            if (telnetCommand.size() >= 6) {
+                msg = msg.mid(3, telnetCommand.size() - 5);
+            }
 
-        TEvent event {};
-        event.mArgumentList.append(qsl("sysTelnetEvent"));
-        event.mArgumentTypeList.append(ARGUMENT_TYPE_STRING);
-        event.mArgumentList.append(QString::number(type));
-        event.mArgumentTypeList.append(ARGUMENT_TYPE_NUMBER);
-        event.mArgumentList.append(QString::number(telnetOption));
-        event.mArgumentTypeList.append(ARGUMENT_TYPE_NUMBER);
-        event.mArgumentList.append(msg);
-        event.mArgumentTypeList.append(ARGUMENT_TYPE_STRING);
-        mpHost->raiseEvent(event);
+            TEvent event {};
+            event.mArgumentList.append(qsl("sysTelnetEvent"));
+            event.mArgumentTypeList.append(ARGUMENT_TYPE_STRING);
+            event.mArgumentList.append(QString::number(type));
+            event.mArgumentTypeList.append(ARGUMENT_TYPE_NUMBER);
+            event.mArgumentList.append(QString::number(telnetOption));
+            event.mArgumentTypeList.append(ARGUMENT_TYPE_NUMBER);
+            event.mArgumentList.append(msg);
+            event.mArgumentTypeList.append(ARGUMENT_TYPE_STRING);
+            mpHost->raiseEvent(event);
+        }
+        
     }
 }
 
@@ -3239,8 +3294,8 @@ bool cTelnet::isIPAddress(QString& arg)
 void cTelnet::promptTlsConnectionAvailable()
 {
     // If an SSL port is detected by MSSP and we're not using it, prompt to use on future connections
-    if (mpHost->mMSSPTlsPort && socket.mode() == QSslSocket::UnencryptedMode && mpHost->mAskTlsAvailable && !isIPAddress(hostName)
-        && (mpHost->mMSSPHostName.isEmpty() || QString::compare(hostName, mpHost->mMSSPHostName, Qt::CaseInsensitive) == 0)) {
+    if (mpHost->mMSSPTlsPort && mpSocket.mode() == QSslSocket::UnencryptedMode && mpHost->mAskTlsAvailable && !isIPAddress(mHostName)
+        && (mpHost->mMSSPHostName.isEmpty() || QString::compare(mHostName, mpHost->mMSSPHostName, Qt::CaseInsensitive) == 0)) {
         postMessage(tr("[ INFO ]  - A more secure connection on port %1 is available.").arg(QString::number(mpHost->mMSSPTlsPort)));
 
         auto msgBox = new QMessageBox();
@@ -3257,12 +3312,12 @@ void cTelnet::promptTlsConnectionAvailable()
         switch (ret) {
         case QMessageBox::Yes:
             cTelnet::disconnectIt();
-            hostPort = mpHost->mMSSPTlsPort;
-            mpHost->setPort(hostPort);
+            mHostPort = mpHost->mMSSPTlsPort;
+            mpHost->setPort(mHostPort);
             mpHost->mSslTsl = true;
-            mpHost->writeProfileData(QLatin1String("port"), QString::number(hostPort));
+            mpHost->writeProfileData(QLatin1String("port"), QString::number(mHostPort));
             mpHost->writeProfileData(QLatin1String("ssl_tsl"), QString::number(Qt::Checked));
-            cTelnet::connectIt(mpHost->getUrl(), hostPort);
+            cTelnet::connectIt(mpHost->getUrl(), mHostPort);
             break;
         case QMessageBox::No:
             cTelnet::disconnectIt();
@@ -3372,8 +3427,9 @@ void cTelnet::postMessage(QString msg)
 {
     messageStack.append(msg);
 
-    if (mIsBeingDestroyed || !mpHost || !mpHost->mpConsole) {
-        // Console doesn't exist (yet), or cTelnet is being destroyed, stack up messages until it does...
+    if (!mpHost || mpHost->isClosingDown() || !mpHost->mpConsole) {
+        // Console doesn't exist (yet), or Host is shutting down; stack up
+        // messages until it does (or they are dumped out by the destructor)...
         return;
     }
 
@@ -3644,7 +3700,7 @@ void cTelnet::slot_timerPosting()
 
 void cTelnet::postData()
 {
-    if (mIsBeingDestroyed || !mpHost || !mpHost->mpConsole) {
+    if (!mpHost || mpHost->isClosingDown() || !mpHost->mpConsole) {
         return;
     }
     mpHost->mpConsole->printOnDisplay(mMudData, true);
@@ -3899,8 +3955,8 @@ void cTelnet::slot_processReplayChunk()
 
 void cTelnet::slot_socketReadyToBeRead()
 {
-    // Check if we're being destroyed or if Host is null/invalid
-    if (mIsBeingDestroyed || !mpHost) {
+    // Check if Host is closing down or null/invalid
+    if (!mpHost || mpHost->isClosingDown()) {
         return;
     }
 
@@ -3912,7 +3968,7 @@ void cTelnet::slot_socketReadyToBeRead()
     // TODO: https://github.com/Mudlet/Mudlet/issues/5780 (2 of 7) - investigate switching from using `char[]` to `std::array<char>`
     char in_buffer[BUFFER_SIZE + 10];
 
-    int amount = socket.read(in_buffer, BUFFER_SIZE);
+    int amount = mpSocket.read(in_buffer, BUFFER_SIZE);
     processSocketData(in_buffer, amount);
 }
 
@@ -4083,6 +4139,9 @@ Some data loss is likely - please mention this problem to the game admins.)", co
                     // a beep every time the screen was refreshed!
                     // TODO: https://github.com/Mudlet/Mudlet/issues/5836 - provide option to actually make a (void) QApplication::beep() or a user-selected sound (different for each profile) and/or instead of the visual alert
                     QApplication::alert(mudlet::self(), 3000);
+                    if (!mudlet::self()->muteGame()) {
+                        QApplication::beep();
+                    }
                 }
                 if (ch != '\r' && ch != '\0') {
                     cleandata += ch;

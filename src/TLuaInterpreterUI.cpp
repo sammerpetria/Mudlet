@@ -54,7 +54,7 @@
 #include "mapInfoContributorManager.h"
 #include "mudlet.h"
 #if defined(INCLUDE_3DMAPPER)
-#include "glwidget.h"
+#include "glwidget_integration.h"
 #endif
 
 #include <limits>
@@ -2070,6 +2070,34 @@ int TLuaInterpreter::selectString(lua_State* L)
     return 1;
 }
 
+int TLuaInterpreter::setActiveProfile(lua_State* L)
+{
+    auto& hostManager = mudlet::self()->getHostManager();
+    const QString profileName = getVerifiedString(L, __func__, 1, "profile name");
+
+    if (profileName.isEmpty()) {
+        lua_pushboolean(L, false);
+        lua_pushstring(L, "setActiveProfile: profile name cannot be empty");
+        return 2;
+    }
+
+    if (!mudlet::self()->profileExists(profileName)) {
+        lua_pushboolean(L, false);
+        lua_pushfstring(L, "setActiveProfile: profile '%s' does not exist", profileName.toUtf8().constData());
+        return 2;
+    }
+
+    if (!hostManager.hostLoaded(profileName)) {
+        lua_pushboolean(L, false);
+        lua_pushfstring(L, "setActiveProfile: profile '%s' is not loaded", profileName.toUtf8().constData());
+        return 2;
+    }
+
+    mudlet::self()->mpTabBar->setCurrentIndex(mudlet::self()->mpTabBar->tabIndex(profileName));
+    lua_pushboolean(L, true);
+    return 1;
+}
+
 // Documentation: https://wiki.mudlet.org/w/Manual:Lua_Functions#setAppStyleSheet
 int TLuaInterpreter::setAppStyleSheet(lua_State* L)
 {
@@ -2473,10 +2501,13 @@ int TLuaInterpreter::setFont(lua_State* L)
     }
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_FREEBSD)
+#if QT_VERSION < QT_VERSION_CHECK(6, 9, 0)
     // On GNU/Linux or FreeBSD ensure that emojis are displayed in colour even
     // if this font doesn't support it:
     QFont::insertSubstitution(fontName, qsl("Noto Color Emoji"));
     // TODO issue #4159: a nonexisting font breaks the console
+#endif
+    // For Qt 6.9+, emoji font support is handled globally in FontManager::addEmojiFont()
 #endif
 
     auto console = CONSOLE(L, windowName);

@@ -11023,8 +11023,7 @@ void dlgTriggerEditor::slot_insertAdjustableContainer()
     }
 
     const QString code = dlg.generateCode();
-    auto controller = mpSourceEditorEdbee->controller();
-    add-gui-for-adjustable-containers
+    auto controller = mpSourceEditorEdbee->controller();    
     controller->replaceSelection(code);
 
 }

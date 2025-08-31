@@ -36,6 +36,7 @@
 #include "VarUnit.h"
 #include "XMLimport.h"
 #include "dlgActionMainArea.h"
+#include "dlgAdjustableContainer.h"
 #include "dlgAliasMainArea.h"
 #include "dlgColorTrigger.h"
 #include "dlgKeysMainArea.h"
@@ -11001,10 +11002,29 @@ void dlgTriggerEditor::slot_editorContextMenu()
         controller->endUndoGroup(edbee::CoalesceId_None, false);
     });
 
+    auto insertContainerAction = new QAction(tr("Add Adjustable Container"), menu);
+    connect(insertContainerAction, &QAction::triggered, this, &dlgTriggerEditor::slot_insertAdjustableContainer);
     menu->addAction(formatAction);
+    menu->addAction(insertContainerAction);
     menu->exec(QCursor::pos());
 
     delete menu;
+}
+
+void dlgTriggerEditor::slot_insertAdjustableContainer()
+{
+    if (!mpSourceEditorEdbee) {
+        return;
+    }
+
+    dlgAdjustableContainer dlg(this);
+    if (dlg.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    const QString code = dlg.generateCode();
+    auto controller = mpSourceEditorEdbee->controller();
+    controller->insertText(code);
 }
 
 QString dlgTriggerEditor::generateButtonStyleSheet(const QColor& color, const bool isEnabled)

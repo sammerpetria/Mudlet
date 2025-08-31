@@ -615,6 +615,7 @@ SOURCES += \
     discord.cpp \
     dlgAboutDialog.cpp \
     dlgActionMainArea.cpp \
+    dlgAdjustableContainer.cpp \
     dlgAliasMainArea.cpp \
     dlgColorTrigger.cpp \
     dlgComposer.cpp \
@@ -749,6 +750,7 @@ HEADERS += \
     discord.h \
     dlgAboutDialog.h \
     dlgActionMainArea.h \
+    dlgAdjustableContainer.h \
     dlgAliasMainArea.h \
     dlgColorTrigger.h \
     dlgComposer.h \
@@ -888,6 +890,7 @@ FORMS += \
     ui/color_trigger.ui \
     ui/composer.ui \
     ui/connection_profiles.ui \
+    ui/dlgAdjustableContainer.ui \
     ui/dlgPackageExporter.ui \
     ui/glyph_usage.ui \
     ui/irc.ui \

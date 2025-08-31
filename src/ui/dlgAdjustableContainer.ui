@@ -19,44 +19,44 @@
       <widget class="QLineEdit" name="lineEdit_container_name"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_console1">
+      <widget class="QLabel" name="label_console">
        <property name="text">
-        <string>First console name:</string>
+        <string>Console name:</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit_console1_name"/>
+      <widget class="QLineEdit" name="lineEdit_console_name"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_console2">
+      <widget class="QLabel" name="label_fontsize">
        <property name="text">
-        <string>Second console name:</string>
+        <string>Font size:</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="lineEdit_console2_name"/>
+      <widget class="QSpinBox" name="spinBox_fontsize">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>9</number>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label_orientation">
+      <widget class="QLabel" name="label_color">
        <property name="text">
-        <string>Orientation:</string>
+        <string>Color:</string>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="comboBox_orientation">
-       <item>
-        <property name="text">
-         <string>Horizontal</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Vertical</string>
-        </property>
-       </item>
+      <widget class="QLineEdit" name="lineEdit_color">
+       <property name="text">
+        <string>black</string>
+       </property>
       </widget>
      </item>
     </layout>

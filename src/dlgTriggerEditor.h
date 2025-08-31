@@ -309,6 +309,7 @@ private slots:
     void slot_clearSearchResults();
     void slot_clearSoundFile();
     void slot_editorContextMenu();
+    void slot_insertAdjustableContainer();
     void slot_visibilityChangedEditorActionsToolbar();
     void slot_visibilityChangedEditorItemsToolbar();
     void slot_floatingChangedEditorActionsToolbar();

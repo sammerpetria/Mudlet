@@ -60,6 +60,7 @@ set(mudlet_SRCS
     discord.cpp
     dlgAboutDialog.cpp
     dlgActionMainArea.cpp
+    dlgAdjustableContainer.cpp
     dlgAliasMainArea.cpp
     dlgColorTrigger.cpp
     dlgComposer.cpp
@@ -211,6 +212,7 @@ set(mudlet_UIS
     ui/color_trigger.ui
     ui/composer.ui
     ui/connection_profiles.ui
+    ui/dlgAdjustableContainer.ui
     ui/dlgPackageExporter.ui
     ui/irc.ui
     ui/keybindings_main_area.ui
@@ -241,6 +243,7 @@ set(mudlet_HDRS
     discord.h
     dlgAboutDialog.h
     dlgActionMainArea.h
+    dlgAdjustableContainer.h
     dlgAliasMainArea.h
     dlgColorTrigger.h
     dlgComposer.h

@@ -37,6 +37,11 @@ QString dlgAdjustableContainer::generateCode() const
         container = qsl("myContainer");
     }
 
+    QString titleText = lineEdit_titleText->text().trimmed();
+    if (titleText.isEmpty()) {
+        titleText = container;
+    }
+
     QString console = lineEdit_console_name->text().trimmed();
     if (console.isEmpty()) {
         console = qsl("console1");
@@ -72,20 +77,22 @@ QString dlgAdjustableContainer::generateCode() const
 
     QString snippet = qsl("%1 = %1 or Adjustable.Container:new({\n"
                           "  name = \"%1\",\n"
-                          "  x = \"%2\", y = %3,\n"
-                          "  width = \"%4\", height = \"%5\",\n"
+                          "  titleText = \"%2\",\n"
+                          "  x = \"%3\", y = %4,\n"
+                          "  width = \"%5\", height = \"%6\",\n"
                           "  autoLoad = true,\n"
                           "})\n\n"
-                          "%6 = %6 or Geyser.MiniConsole:new({\n"
-                          "  name = \"%6\",\n"
+                          "%7 = %7 or Geyser.MiniConsole:new({\n"
+                          "  name = \"%7\",\n"
                           "  x = 0, y = 4,\n"
                           "  width = \"100%\", height = \"100%-4\",\n"
                           "  autoWrap = true,\n"
-                          "  fontSize = %7,\n"
-                          "  color = \"%8\",\n"
-                          "  scrollBar = %9,\n"
-                          "}, %1)\n\n")
-                              .arg(container, x, yOutput, width, height, console, QString::number(fontSize), color, scrollBarEnabled);
+                          "  fontSize = %8,\n"
+                          "  color = \"%9\",\n"
+                          "  scrollBar = %10,\n"
+                          "}, %1)\n\n");
+
+    snippet = snippet.arg(container).arg(titleText).arg(x).arg(yOutput).arg(width).arg(height).arg(console).arg(QString::number(fontSize)).arg(color).arg(scrollBarEnabled);
 
     return snippet;
 }

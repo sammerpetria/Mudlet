@@ -19,44 +19,114 @@
       <widget class="QLineEdit" name="lineEdit_container_name"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_console1">
+      <widget class="QLabel" name="label_console">
        <property name="text">
-        <string>First console name:</string>
+        <string>Console name:</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit_console1_name"/>
+      <widget class="QLineEdit" name="lineEdit_console_name"/>
      </item>
      <item row="2" column="0">
-      <widget class="QLabel" name="label_console2">
+      <widget class="QLabel" name="label_x">
        <property name="text">
-        <string>Second console name:</string>
+        <string>X (%):</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="lineEdit_console2_name"/>
+      <widget class="QLineEdit" name="lineEdit_x">
+       <property name="text">
+        <string>-20%</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label_orientation">
+      <widget class="QLabel" name="label_y">
        <property name="text">
-        <string>Orientation:</string>
+        <string>Y (%):</string>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="comboBox_orientation">
-       <item>
-        <property name="text">
-         <string>Horizontal</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Vertical</string>
-        </property>
-       </item>
+      <widget class="QLineEdit" name="lineEdit_y">
+       <property name="text">
+        <string>0</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_width">
+       <property name="text">
+        <string>Width (%):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="lineEdit_width">
+       <property name="text">
+        <string>20%</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_height">
+       <property name="text">
+        <string>Height (%):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="lineEdit_height">
+       <property name="text">
+        <string>20%</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_fontsize">
+       <property name="text">
+        <string>Font size:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QSpinBox" name="spinBox_fontsize">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="value">
+        <number>9</number>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_color">
+       <property name="text">
+        <string>Background Color:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="lineEdit_color">
+       <property name="text">
+        <string>black</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_scrollbar">
+       <property name="text">
+        <string>ScrollBar:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QCheckBox" name="checkBox_scrollbar">
+       <property name="text">
+        <string/>
+       </property>
       </widget>
      </item>
     </layout>

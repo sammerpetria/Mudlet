@@ -23,6 +23,29 @@ QString dlgAdjustableContainer::generateCode() const
         console = qsl("console1");
     }
 
+
+    QString x = lineEdit_x->text().trimmed();
+    if (x.isEmpty()) {
+        x = qsl("-20%");
+    }
+    QString scrollBar = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
+
+    QString y = lineEdit_y->text().trimmed();
+    if (y.isEmpty()) {
+        y = qsl("0");
+    }
+    QString yOutput = y.contains('%') ? qsl("\"%1\"").arg(y) : y;
+
+    QString width = lineEdit_width->text().trimmed();
+    if (width.isEmpty()) {
+        width = qsl("20%");
+    }
+
+    QString height = lineEdit_height->text().trimmed();
+    if (height.isEmpty()) {
+        height = qsl("20%");
+    }
+
     int fontSize = spinBox_fontsize->value();
     QString color = lineEdit_color->text().trimmed();
     if (color.isEmpty()) {
@@ -30,21 +53,21 @@ QString dlgAdjustableContainer::generateCode() const
     }
     QString scrollBar = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
 
-
     QString snippet = qsl("%1 = %1 or Adjustable.Container:new({\n"
                           "  name = \"%1\",\n"
-                          "  x = \"-20%\", y = 0,\n"
-                          "  width = \"20%\", height = \"20%\",\n"
+                          "  x = \"%2\", y = %3,\n"
+                          "  width = \"%4\", height = \"%5\",\n"
                           "  autoLoad = true,\n"
                           "})\n\n"
-                          "%2 = Geyser.MiniConsole:new({\n"
-                          "  name = \"%2\",\n"
+                          "%6 = %6 or Geyser.MiniConsole:new({\n"
+                          "  name = \"%6\",\n"
                           "  x = 0, y = 4,\n"
                           "  width = \"100%\", height = \"100%-4\",\n"
-                          "  fontSize = %3,\n"
-                          "  color = \"%4\",\n"
-                          "  scrollBar = %5,\n"
+                          "  autoWrap = true,\n"
+                          "  fontSize = %7,\n"
+                          "  color = \"%8\",\n"
+                          "  scrollBar = %9,\n"
                           "}, %1)\n\n")
-                              .arg(container, console, QString::number(fontSize), color, scrollBar);
+                              .arg(container, x, yOutput, width, height, console, QString::number(fontSize), color, scrollBar);
     return snippet;
 }

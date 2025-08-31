@@ -1,22 +1,3 @@
-/***************************************************************************
- *   Copyright (C) 2024 by OpenAI                                          *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
-
 #include "dlgAdjustableContainer.h"
 
 #include "pre_guard.h"
@@ -36,6 +17,7 @@ QString dlgAdjustableContainer::generateCode() const
     if (container.isEmpty()) {
         container = qsl("myContainer");
     }
+
 
     QString titleText = lineEdit_titleText->text().trimmed();
     if (titleText.isEmpty()) {
@@ -58,6 +40,7 @@ QString dlgAdjustableContainer::generateCode() const
     }
     QString yOutput = y.contains('%') ? qsl("\"%1\"").arg(y) : y;
 
+
     QString width = lineEdit_width->text().trimmed();
     if (width.isEmpty()) {
         width = qsl("20%");
@@ -67,6 +50,7 @@ QString dlgAdjustableContainer::generateCode() const
     if (height.isEmpty()) {
         height = qsl("20%");
     }
+    QString scrollBarEnabled = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
 
     int fontSize = spinBox_fontsize->value();
     QString color = lineEdit_color->text().trimmed();
@@ -91,8 +75,6 @@ QString dlgAdjustableContainer::generateCode() const
                           "  color = \"%9\",\n"
                           "  scrollBar = %10,\n"
                           "}, %1)\n\n");
-
     snippet = snippet.arg(container).arg(titleText).arg(x).arg(yOutput).arg(width).arg(height).arg(console).arg(QString::number(fontSize)).arg(color).arg(scrollBarEnabled);
-
     return snippet;
 }

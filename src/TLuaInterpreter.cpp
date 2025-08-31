@@ -3474,7 +3474,7 @@ void TLuaInterpreter::signalMXPEvent(const QString &type, const QMap<QString, QS
     lua_pop(L, 1);
 
     lua_pushstring(L, caption.toUtf8().constData());
-    lua_setfield(L, -2, "caption");
+    lua_setfield(L, -2, "text");
 
     lua_pop(L, lua_gettop(L));
 

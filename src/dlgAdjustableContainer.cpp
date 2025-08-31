@@ -1,8 +1,9 @@
 #include "dlgAdjustableContainer.h"
-
 #include "pre_guard.h"
 #include <QString>
 #include "post_guard.h"
+
+// Dialog for creating adjustable containers with miniconsole. right click in new script edition
 
 dlgAdjustableContainer::dlgAdjustableContainer(QWidget* parent) : QDialog(parent)
 {
@@ -49,14 +50,14 @@ QString dlgAdjustableContainer::generateCode() const
     QString height = lineEdit_height->text().trimmed();
     if (height.isEmpty()) {
         height = qsl("20%");
-    }
-    QString scrollBarEnabled = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
+    }    
 
     int fontSize = spinBox_fontsize->value();
     QString color = lineEdit_color->text().trimmed();
     if (color.isEmpty()) {
         color = qsl("black");
     }
+
     QString scrollBarEnabled = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
 
     QString snippet = qsl("%1 = %1 or Adjustable.Container:new({\n"

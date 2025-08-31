@@ -11008,6 +11008,7 @@ void dlgTriggerEditor::slot_editorContextMenu()
         controller->endUndoGroup(edbee::CoalesceId_None, false);
     });
 
+    // Dialog for creating adjustable containers with miniconsole. right click in new script edition
     auto insertContainerAction = new QAction(tr("Add Adjustable Conteiner Console"), menu);
     connect(insertContainerAction, &QAction::triggered, this, &dlgTriggerEditor::slot_insertAdjustableContainer);
     menu->addAction(formatAction);

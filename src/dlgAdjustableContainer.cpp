@@ -37,34 +37,25 @@ QString dlgAdjustableContainer::generateCode() const
         container = qsl("myContainer");
     }
 
-    QString firstConsole = lineEdit_console1_name->text().trimmed();
-    if (firstConsole.isEmpty()) {
-        firstConsole = qsl("console1");
+    QString console = lineEdit_console_name->text().trimmed();
+    if (console.isEmpty()) {
+        console = qsl("console1");
     }
 
-    QString secondConsole = lineEdit_console2_name->text().trimmed();
-    if (secondConsole.isEmpty()) {
-        secondConsole = qsl("console2");
+    int fontSize = spinBox_fontsize->value();
+    QString color = lineEdit_color->text().trimmed();
+    if (color.isEmpty()) {
+        color = qsl("black");
     }
-
-    const bool vertical = comboBox_orientation->currentIndex() == 1;
 
     QString snippet = qsl("%1 = Adjustable.Container:new({\n"
                           "  name = \"%1\",\n"
-                          "  x = 0, y = 0,\n"
-                          "  width = \"100%\", height = \"100%\"\n"
-                          "})\n")
-                              .arg(container);
-
-    if (vertical) {
-        snippet += qsl("%2 = Geyser.MiniConsole:new({name=\"%2\", x=\"0%\", y=\"0%\", width=\"100%\", height=\"50%\"}, %1)\n"
-                       "%3 = Geyser.MiniConsole:new({name=\"%3\", x=\"0%\", y=\"50%\", width=\"100%\", height=\"50%\"}, %1)\n")
-                           .arg(container, firstConsole, secondConsole);
-    } else {
-        snippet += qsl("%2 = Geyser.MiniConsole:new({name=\"%2\", x=\"0%\", y=\"0%\", width=\"50%\", height=\"100%\"}, %1)\n"
-                       "%3 = Geyser.MiniConsole:new({name=\"%3\", x=\"50%\", y=\"0%\", width=\"50%\", height=\"100%\"}, %1)\n")
-                           .arg(container, firstConsole, secondConsole);
-    }
+                          "  x = \"-20%\", y = 0,\n"
+                          "  width = \"20%\", height = \"20%\",\n"
+                          "  autoLoad = true,\n"
+                          "})\n"
+                          "%2 = Geyser.MiniConsole:new({name=\"%2\", x=0, y=4, width=\"100%\", height=\"100%-4\", fontSize=%3, color=\"%4\"}, %1)\n")
+                              .arg(container, console, QString::number(fontSize), color);
 
     return snippet;
 }

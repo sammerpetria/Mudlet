@@ -31,7 +31,7 @@
      <item row="2" column="0">
       <widget class="QLabel" name="label_x">
        <property name="text">
-        <string>X (%):</string>
+        <string>Position X (%):</string>
        </property>
       </widget>
      </item>
@@ -45,7 +45,7 @@
      <item row="3" column="0">
       <widget class="QLabel" name="label_y">
        <property name="text">
-        <string>Y (%):</string>
+        <string>Position Y (%):</string>
        </property>
       </widget>
      </item>

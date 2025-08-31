@@ -28,7 +28,6 @@ QString dlgAdjustableContainer::generateCode() const
     if (x.isEmpty()) {
         x = qsl("-20%");
     }
-    QString scrollBar = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
 
     QString y = lineEdit_y->text().trimmed();
     if (y.isEmpty()) {
@@ -45,13 +44,13 @@ QString dlgAdjustableContainer::generateCode() const
     if (height.isEmpty()) {
         height = qsl("20%");
     }
-
+  
     int fontSize = spinBox_fontsize->value();
     QString color = lineEdit_color->text().trimmed();
     if (color.isEmpty()) {
         color = qsl("black");
     }
-    QString scrollBar = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
+    QString scrollBarEnabled = checkBox_scrollbar->isChecked() ? qsl("true") : qsl("false");
 
     QString snippet = qsl("%1 = %1 or Adjustable.Container:new({\n"
                           "  name = \"%1\",\n"
@@ -68,6 +67,6 @@ QString dlgAdjustableContainer::generateCode() const
                           "  color = \"%8\",\n"
                           "  scrollBar = %9,\n"
                           "}, %1)\n\n")
-                              .arg(container, x, yOutput, width, height, console, QString::number(fontSize), color, scrollBar);
+                              .arg(container, x, yOutput, width, height, console, QString::number(fontSize), color, scrollBarEnabled);
     return snippet;
 }

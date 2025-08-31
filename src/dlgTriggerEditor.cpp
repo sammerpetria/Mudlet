@@ -11024,7 +11024,9 @@ void dlgTriggerEditor::slot_insertAdjustableContainer()
 
     const QString code = dlg.generateCode();
     auto controller = mpSourceEditorEdbee->controller();
+    add-gui-for-adjustable-containers
     controller->replaceSelection(code);
+
 }
 
 QString dlgTriggerEditor::generateButtonStyleSheet(const QColor& color, const bool isEnabled)

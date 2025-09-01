@@ -5175,7 +5175,10 @@ void dlgTriggerEditor::saveTrigger()
     if (!pItem) {
         return;
     }
-    if (!pItem->parent()) {
+    
+    // Additional safety check: ensure the item's parent is still valid
+    // and that the item is still part of the tree widget
+    if (!pItem->parent() || pItem->treeWidget() != treeWidget_triggers) {
         return;
     }
 
@@ -5363,6 +5366,11 @@ void dlgTriggerEditor::saveTimer()
     if (!pItem) {
         return;
     }
+    
+    // Ensure the item is still part of the tree widget
+    if (pItem->treeWidget() != treeWidget_timers) {
+        return;
+    }
 
     mpTimersMainArea->trimName();
     const QString name = mpTimersMainArea->lineEdit_timer_name->text();
@@ -5478,6 +5486,11 @@ void dlgTriggerEditor::saveAlias()
 {
     QTreeWidgetItem* pItem = mpCurrentAliasItem;
     if (!pItem) {
+        return;
+    }
+    
+    // Ensure the item is still part of the tree widget
+    if (pItem->treeWidget() != treeWidget_aliases) {
         return;
     }
 
@@ -5614,6 +5627,11 @@ void dlgTriggerEditor::saveAction()
 {
     QTreeWidgetItem* pItem = mpCurrentActionItem;
     if (!pItem) {
+        return;
+    }
+    
+    // Ensure the item is still part of the tree widget
+    if (pItem->treeWidget() != treeWidget_actions) {
         return;
     }
 
@@ -5791,6 +5809,11 @@ void dlgTriggerEditor::saveScript()
 {
     QTreeWidgetItem* pItem = mpCurrentScriptItem;
     if (!pItem) {
+        return;
+    }
+    
+    // Ensure the item is still part of the tree widget
+    if (pItem->treeWidget() != treeWidget_scripts) {
         return;
     }
 
@@ -6160,6 +6183,11 @@ void dlgTriggerEditor::saveKey()
 {
     QTreeWidgetItem* pItem = mpCurrentKeyItem;
     if (!pItem) {
+        return;
+    }
+    
+    // Ensure the item is still part of the tree widget
+    if (pItem->treeWidget() != treeWidget_keys) {
         return;
     }
 
@@ -10401,6 +10429,15 @@ void dlgTriggerEditor::doCleanReset()
 
 void dlgTriggerEditor::runScheduledCleanReset()
 {
+    // Clear all current item pointers BEFORE attempting to save or clear tree widgets
+    // to prevent heap-use-after-free when the tree widgets are cleared
+    mpCurrentTriggerItem = nullptr;
+    mpCurrentTimerItem = nullptr;
+    mpCurrentAliasItem = nullptr;
+    mpCurrentScriptItem = nullptr;
+    mpCurrentActionItem = nullptr;
+    mpCurrentKeyItem = nullptr;
+
     switch (mCurrentView) {
     case EditorViewType::cmTriggerView:
         saveTrigger();
@@ -10436,12 +10473,6 @@ void dlgTriggerEditor::runScheduledCleanReset()
     treeWidget_keys->clear();
     treeWidget_scripts->clear();
     fillout_form();
-    mpCurrentTriggerItem = nullptr;
-    mpCurrentTimerItem = nullptr;
-    mpCurrentAliasItem = nullptr;
-    mpCurrentScriptItem = nullptr;
-    mpCurrentActionItem = nullptr;
-    mpCurrentKeyItem = nullptr;
     slot_showTriggers();
 }
 

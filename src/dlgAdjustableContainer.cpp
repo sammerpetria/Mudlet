@@ -8,6 +8,7 @@
 dlgAdjustableContainer::dlgAdjustableContainer(QWidget* parent) : QDialog(parent)
 {
     setupUi(this);
+    lineEdit_container_name->setMinimumWidth(200);
     connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }

@@ -1651,7 +1651,7 @@ void dlgTriggerEditor::slot_itemSelectedInSearchResults(QTreeWidgetItem* pItem)
         }
     } // End of case static_cast<int>(EditorViewType::cmVarsView)
     break;
-    default:; // No-op
+    default: {} // No-op
     } // End of switch()
 }
 
@@ -6958,7 +6958,7 @@ void dlgTriggerEditor::slot_variableSelected(QTreeWidgetItem* pItem)
         [[fallthrough]];
     case LUA_TUSERDATA:
         [[fallthrough]];
-    case LUA_TTHREAD:; // No-op
+    case LUA_TTHREAD: {} // No-op
     }
 
     mpVarsMainArea->checkBox_variable_hidden->setChecked(vu->isHidden(var));
@@ -11009,7 +11009,7 @@ void dlgTriggerEditor::slot_editorContextMenu()
     });
 
     // Dialog for creating adjustable containers with miniconsole. right click in new script edition
-    auto insertContainerAction = new QAction(tr("Add Adjustable Conteiner Console"), menu);
+    auto insertContainerAction = new QAction(tr("Add Adjustable Container Console"), menu);
     connect(insertContainerAction, &QAction::triggered, this, &dlgTriggerEditor::slot_insertAdjustableContainer);
     menu->addAction(formatAction);
     menu->addAction(insertContainerAction);

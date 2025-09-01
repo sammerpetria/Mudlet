@@ -58,6 +58,8 @@
 #include "pre_guard.h"
 #include <chrono>
 #include <QtConcurrent>
+#include <QAccessible>
+#include <QAccessibleTextCursorEvent>
 #include <QDialog>
 #include <QtUiTools>
 #include <QNetworkProxy>
@@ -4473,6 +4475,13 @@ void Host::setFocusOnHostActiveCommandLine()
         }
         if (focusWidget) {
             focusWidget->setFocus(Qt::OtherFocusReason);
+            if (focusWidget == mpLastFocusedTextEdit && QAccessible::isActive()) {
+                QAccessibleEvent accessibleEvent(mpLastFocusedTextEdit, QAccessible::Focus);
+                QAccessible::updateAccessibility(&accessibleEvent);
+                const QAccessibleTextInterface* ti = QAccessible::queryAccessibleInterface(mpLastFocusedTextEdit)->textInterface();
+                QAccessibleTextCursorEvent cursorEvent(mpLastFocusedTextEdit, ti->cursorPosition());
+                QAccessible::updateAccessibility(&cursorEvent);
+            }
         }
         mFocusTimerRunning = false;
     });

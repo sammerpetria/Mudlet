@@ -38,6 +38,7 @@
 #include "TCommandLine.h"
 #include "TConsole.h"
 #include "TDebug.h"
+#include "TTextEdit.h"
 #include "TDebug.h"
 #include "TDockWidget.h"
 #include "TEvent.h"
@@ -57,6 +58,9 @@
 #include "pre_guard.h"
 #include <chrono>
 #include <QtConcurrent>
+#include <QAccessible>
+#include <QAccessibleTextCursorEvent>
+#include <QAccessibleTextSelectionEvent>
 #include <QDialog>
 #include <QtUiTools>
 #include <QNetworkProxy>
@@ -4448,22 +4452,51 @@ void Host::setFocusOnHostActiveCommandLine()
 
     mFocusTimerRunning = true;
     QTimer::singleShot(0, this, [this]() {
-        auto pCommandLine = activeCommandLine();
-        if (pCommandLine) {
+        QWidget* focusWidget = nullptr;
+        if (caretEnabled() && mpLastFocusedTextEdit) {
+            focusWidget = mpLastFocusedTextEdit;
+        } else if (auto pCommandLine = activeCommandLine()) {
+            focusWidget = pCommandLine;
+        } else {
+            focusWidget = mpConsole->mpCommandLine;
+        }
+
+        if (auto pCommandLine = qobject_cast<TCommandLine*>(focusWidget)) {
             pCommandLine->activateWindow();
             pCommandLine->console()->show();
             pCommandLine->console()->raise();
             pCommandLine->console()->repaint();
-            pCommandLine->setFocus(Qt::OtherFocusReason);
-        } else {
-            mpConsole->mpCommandLine->activateWindow();
-            mpConsole->show();
-            mpConsole->raise();
-            mpConsole->repaint();
-            mpConsole->mpCommandLine->setFocus(Qt::OtherFocusReason);
+        } else if (auto pTextEdit = qobject_cast<TTextEdit*>(focusWidget)) {
+            if (auto pConsole = parentTConsole(pTextEdit)) {
+                pTextEdit->activateWindow();
+                pConsole->show();
+                pConsole->raise();
+                pConsole->repaint();
+            }
+        }
+        if (focusWidget) {
+            focusWidget->setFocus(Qt::OtherFocusReason);
+            if (focusWidget == mpLastFocusedTextEdit && QAccessible::isActive()) {
+                QAccessibleEvent accessibleEvent(mpLastFocusedTextEdit, QAccessible::Focus);
+                QAccessible::updateAccessibility(&accessibleEvent);
+                if (QAccessibleInterface* iface = QAccessible::queryAccessibleInterface(mpLastFocusedTextEdit)) {
+                    if (QAccessibleTextInterface* ti = iface->textInterface()) {
+                        const int pos = ti->cursorPosition();
+                        QAccessibleTextCursorEvent cursorEvent(mpLastFocusedTextEdit, pos);
+                        QAccessible::updateAccessibility(&cursorEvent);
+                        QAccessibleTextSelectionEvent selectionEvent(mpLastFocusedTextEdit, pos, pos);
+                        QAccessible::updateAccessibility(&selectionEvent);
+                    }
+                }
+            }
         }
         mFocusTimerRunning = false;
     });
+}
+
+void Host::recordFocusedTextEdit(TTextEdit* pTextEdit)
+{
+    mpLastFocusedTextEdit = pTextEdit;
 }
 
 void Host::recordActiveCommandLine(TCommandLine* pCommandLine)

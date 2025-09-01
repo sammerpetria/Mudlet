@@ -60,6 +60,7 @@
 #include <QtConcurrent>
 #include <QAccessible>
 #include <QAccessibleTextCursorEvent>
+#include <QAccessibleTextSelectionEvent>
 #include <QDialog>
 #include <QtUiTools>
 #include <QNetworkProxy>
@@ -4478,9 +4479,15 @@ void Host::setFocusOnHostActiveCommandLine()
             if (focusWidget == mpLastFocusedTextEdit && QAccessible::isActive()) {
                 QAccessibleEvent accessibleEvent(mpLastFocusedTextEdit, QAccessible::Focus);
                 QAccessible::updateAccessibility(&accessibleEvent);
-                const QAccessibleTextInterface* ti = QAccessible::queryAccessibleInterface(mpLastFocusedTextEdit)->textInterface();
-                QAccessibleTextCursorEvent cursorEvent(mpLastFocusedTextEdit, ti->cursorPosition());
-                QAccessible::updateAccessibility(&cursorEvent);
+                if (QAccessibleInterface* iface = QAccessible::queryAccessibleInterface(mpLastFocusedTextEdit)) {
+                    if (QAccessibleTextInterface* ti = iface->textInterface()) {
+                        const int pos = ti->cursorPosition();
+                        QAccessibleTextCursorEvent cursorEvent(mpLastFocusedTextEdit, pos);
+                        QAccessible::updateAccessibility(&cursorEvent);
+                        QAccessibleTextSelectionEvent selectionEvent(mpLastFocusedTextEdit, pos, pos);
+                        QAccessible::updateAccessibility(&selectionEvent);
+                    }
+                }
             }
         }
         mFocusTimerRunning = false;

@@ -40,6 +40,7 @@
 #include <QtGlobal>
 #include <QAccessible>
 #include <QAccessibleTextCursorEvent>
+#include <QAccessibleTextSelectionEvent>
 #include <QAccessibleTextInsertEvent>
 #include <QApplication>
 #include <QChar>
@@ -154,6 +155,15 @@ void TTextEdit::focusInEvent(QFocusEvent* event)
     if (QAccessible::isActive()) {
         QAccessibleEvent accessibleEvent(this, QAccessible::Focus);
         QAccessible::updateAccessibility(&accessibleEvent);
+        if (QAccessibleInterface* iface = QAccessible::queryAccessibleInterface(this)) {
+            if (QAccessibleTextInterface* ti = iface->textInterface()) {
+                const int pos = ti->cursorPosition();
+                QAccessibleTextCursorEvent cursorEvent(this, pos);
+                QAccessible::updateAccessibility(&cursorEvent);
+                QAccessibleTextSelectionEvent selectionEvent(this, pos, pos);
+                QAccessible::updateAccessibility(&selectionEvent);
+            }
+        }
     }
 }
 

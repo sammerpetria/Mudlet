@@ -38,6 +38,7 @@
 #include "TCommandLine.h"
 #include "TConsole.h"
 #include "TDebug.h"
+#include "TTextEdit.h"
 #include "TDebug.h"
 #include "TDockWidget.h"
 #include "TEvent.h"
@@ -4448,22 +4449,38 @@ void Host::setFocusOnHostActiveCommandLine()
 
     mFocusTimerRunning = true;
     QTimer::singleShot(0, this, [this]() {
-        auto pCommandLine = activeCommandLine();
-        if (pCommandLine) {
+        QWidget* focusWidget = nullptr;
+        if (caretEnabled() && mpLastFocusedTextEdit) {
+            focusWidget = mpLastFocusedTextEdit;
+        } else if (auto pCommandLine = activeCommandLine()) {
+            focusWidget = pCommandLine;
+        } else {
+            focusWidget = mpConsole->mpCommandLine;
+        }
+
+        if (auto pCommandLine = qobject_cast<TCommandLine*>(focusWidget)) {
             pCommandLine->activateWindow();
             pCommandLine->console()->show();
             pCommandLine->console()->raise();
             pCommandLine->console()->repaint();
-            pCommandLine->setFocus(Qt::OtherFocusReason);
-        } else {
-            mpConsole->mpCommandLine->activateWindow();
-            mpConsole->show();
-            mpConsole->raise();
-            mpConsole->repaint();
-            mpConsole->mpCommandLine->setFocus(Qt::OtherFocusReason);
+        } else if (auto pTextEdit = qobject_cast<TTextEdit*>(focusWidget)) {
+            if (auto pConsole = parentTConsole(pTextEdit)) {
+                pTextEdit->activateWindow();
+                pConsole->show();
+                pConsole->raise();
+                pConsole->repaint();
+            }
+        }
+        if (focusWidget) {
+            focusWidget->setFocus(Qt::OtherFocusReason);
         }
         mFocusTimerRunning = false;
     });
+}
+
+void Host::recordFocusedTextEdit(TTextEdit* pTextEdit)
+{
+    mpLastFocusedTextEdit = pTextEdit;
 }
 
 void Host::recordActiveCommandLine(TCommandLine* pCommandLine)

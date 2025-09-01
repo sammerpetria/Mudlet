@@ -593,6 +593,7 @@ void TCommandLine::focusInEvent(QFocusEvent* event)
     // switching away and back to the Mudlet application and it messes up
     // the record:
     if (event->reason() != Qt::ActiveWindowFocusReason) {
+        mpHost->recordFocusedTextEdit(nullptr);
         mpHost->recordActiveCommandLine(this);
     }
 

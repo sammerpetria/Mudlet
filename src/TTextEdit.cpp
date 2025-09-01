@@ -148,12 +148,19 @@ void TTextEdit::focusInEvent(QFocusEvent* event)
 {
     update();
     QWidget::focusInEvent(event);
+    if (mpHost && event->reason() != Qt::ActiveWindowFocusReason) {
+        mpHost->recordFocusedTextEdit(this);
+    }
+    if (QAccessible::isActive()) {
+        QAccessibleEvent accessibleEvent(this, QAccessible::Focus);
+        QAccessible::updateAccessibility(&accessibleEvent);
+    }
 }
 
 void TTextEdit::focusOutEvent(QFocusEvent* event)
 {
     // Safety check: during destruction, mpHost might be null
-    if (mpHost && mpHost->caretEnabled()) {
+    if (mpHost && mpHost->caretEnabled() && event->reason() != Qt::ActiveWindowFocusReason) {
         mpHost->setCaretEnabled(false);
     }
 

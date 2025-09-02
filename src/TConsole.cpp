@@ -37,6 +37,7 @@
 #include "TRoomDB.h"
 #include "TSplitter.h"
 #include "TTextEdit.h"
+#include "TAccessibleTextEdit.h"
 #include "dlgMapper.h"
 #include "mudlet.h"
 
@@ -2312,10 +2313,12 @@ void TConsole::focusOutEvent(QFocusEvent* event)
 
     if (mUpperPane && mUpperPane->hasFocus()) {
         mLastFocusedPane = mUpperPane;
-        mLastCursorPosition = mUpperPane->textCursor().position();
+        mLastCaretLine = mUpperPane->mCaretLine;
+        mLastCaretColumn = mUpperPane->mCaretColumn;
     } else if (mLowerPane && mLowerPane->hasFocus()) {
         mLastFocusedPane = mLowerPane;
-        mLastCursorPosition = mLowerPane->textCursor().position();
+        mLastCaretLine = mLowerPane->mCaretLine;
+        mLastCaretColumn = mLowerPane->mCaretColumn;
     } else {
         mLastFocusedPane = nullptr;
     }
@@ -2330,15 +2333,21 @@ void TConsole::focusInEvent(QFocusEvent* event)
     }
 
     mLastFocusedPane->setFocus(Qt::OtherFocusReason);
-    QTextCursor cursor = mLastFocusedPane->textCursor();
-    cursor.setPosition(mLastCursorPosition);
-    mLastFocusedPane->setTextCursor(cursor);
+    mLastFocusedPane->setCaretPosition(mLastCaretLine, mLastCaretColumn);
+    mLastFocusedPane->updateCaret();
 
     if (QAccessible::isActive()) {
         QAccessibleEvent focusEvent(mLastFocusedPane, QAccessible::Focus);
         QAccessible::updateAccessibility(&focusEvent);
-        QAccessibleTextCursorEvent cursorEvent(mLastFocusedPane, mLastCursorPosition);
-        QAccessible::updateAccessibility(&cursorEvent);
+
+        if (QAccessibleInterface* iface = QAccessible::queryAccessibleInterface(mLastFocusedPane)) {
+            if (auto textIface = dynamic_cast<TAccessibleTextEdit*>(iface)) {
+                const int offset = textIface->offsetForPosition(mLastCaretLine, mLastCaretColumn);
+                QAccessibleTextCursorEvent cursorEvent(mLastFocusedPane, offset);
+                QAccessible::updateAccessibility(&cursorEvent);
+            }
+            delete iface;
+        }
     }
 }
 

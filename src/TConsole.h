@@ -334,7 +334,8 @@ public:
     TTextEdit* mUpperPane = nullptr;
     TTextEdit* mLowerPane = nullptr;
     TTextEdit* mLastFocusedPane = nullptr;
-    int mLastCursorPosition = 0;
+    int mLastCaretLine = 0;
+    int mLastCaretColumn = 0;
 
     QToolButton* emergencyStop = nullptr;
     QWidget* layer = nullptr;

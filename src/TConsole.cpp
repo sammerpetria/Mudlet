@@ -37,12 +37,14 @@
 #include "TRoomDB.h"
 #include "TSplitter.h"
 #include "TTextEdit.h"
+#include "TAccessibleTextEdit.h"
 #include "dlgMapper.h"
 #include "mudlet.h"
 
 #include "pre_guard.h"
 #include <QAccessibleInterface>
 #include <QAccessibleWidget>
+#include <QAccessibleTextCursorEvent>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMimeData>
@@ -2302,6 +2304,50 @@ void TConsole::slot_adjustAccessibleNames()
 void TConsole::mouseReleaseEvent(QMouseEvent* event)
 {
     raiseMudletMousePressOrReleaseEvent(event, false);
+}
+
+void TConsole::focusOutEvent(QFocusEvent* event)
+{
+    QWidget::focusOutEvent(event);
+
+    if (mUpperPane && mUpperPane->hasFocus()) {
+        mLastFocusedPane = mUpperPane;
+        mLastCaretLine = mUpperPane->mCaretLine;
+        mLastCaretColumn = mUpperPane->mCaretColumn;
+    } else if (mLowerPane && mLowerPane->hasFocus()) {
+        mLastFocusedPane = mLowerPane;
+        mLastCaretLine = mLowerPane->mCaretLine;
+        mLastCaretColumn = mLowerPane->mCaretColumn;
+    } else {
+        mLastFocusedPane = nullptr;
+    }
+}
+
+void TConsole::focusInEvent(QFocusEvent* event)
+{
+    QWidget::focusInEvent(event);
+
+    if (!mLastFocusedPane) {
+        return;
+    }
+
+    mLastFocusedPane->setFocus(Qt::OtherFocusReason);
+    mLastFocusedPane->setCaretPosition(mLastCaretLine, mLastCaretColumn);
+    mLastFocusedPane->updateCaret();
+
+    if (QAccessible::isActive()) {
+        QAccessibleEvent focusEvent(mLastFocusedPane, QAccessible::Focus);
+        QAccessible::updateAccessibility(&focusEvent);
+
+        if (QAccessibleInterface* iface = QAccessible::queryAccessibleInterface(mLastFocusedPane)) {
+            if (auto textIface = dynamic_cast<TAccessibleTextEdit*>(iface)) {
+                const int offset = textIface->offsetForPosition(mLastCaretLine, mLastCaretColumn);
+                QAccessibleTextCursorEvent cursorEvent(mLastFocusedPane, offset);
+                QAccessible::updateAccessibility(&cursorEvent);
+            }
+            delete iface;
+        }
+    }
 }
 
 void TConsole::slot_changeControlCharacterHandling(const ControlCharacterMode mode)

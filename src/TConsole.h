@@ -333,6 +333,9 @@ public:
     static const QString cmLuaLineVariable;
     TTextEdit* mUpperPane = nullptr;
     TTextEdit* mLowerPane = nullptr;
+    TTextEdit* mLastFocusedPane = nullptr;
+    int mLastCaretLine = 0;
+    int mLastCaretColumn = 0;
 
     QToolButton* emergencyStop = nullptr;
     QWidget* layer = nullptr;
@@ -426,6 +429,8 @@ signals:
     void resized(QResizeEvent* event);
 
 protected:
+    void focusInEvent(QFocusEvent* event) override;
+    void focusOutEvent(QFocusEvent* event) override;
     void dragEnterEvent(QDragEnterEvent*) override;
     void dragMoveEvent(QDragMoveEvent*) override;
     void dropEvent(QDropEvent*) override;

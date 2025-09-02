@@ -422,6 +422,7 @@ public:
     void setCaretEnabled(bool enabled);
     void setFocusOnHostActiveCommandLine();
     void recordActiveCommandLine(TCommandLine*);
+    void recordFocusedTextEdit(TTextEdit*);
     void forgetCommandLine(TCommandLine*);
     QPointer<TConsole> parentTConsole(QObject*) const;
     QMargins borders() const { return mBorders; }
@@ -965,6 +966,7 @@ private:
     bool mEditorShowBidi = true;
     // should focus should be on the main window with the caret enabled?
     bool mCaretEnabled = false;
+    QPointer<TTextEdit> mpLastFocusedTextEdit;
 
     // Tracks which command line was last used for this profile so that we can
     // return to it when switching between profiles:

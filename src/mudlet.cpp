@@ -6376,6 +6376,9 @@ void mudlet::changeEvent(QEvent* event)
     } else if (event->type() == QEvent::ActivationChange) {
         // Update window menu when window activation changes
         updateWindowMenu();
+        if (isActiveWindow() && mpCurrentActiveHost) {
+            mpCurrentActiveHost->setFocusOnHostActiveCommandLine();
+        }
     }
     QWidget::changeEvent(event);
 }

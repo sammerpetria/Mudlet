@@ -52,6 +52,7 @@
 #include <QShortcut>
 #include <QTextBoundaryFinder>
 #include <QTextCodec>
+#include <QTextCursor>
 #include <QPainter>
 #include "post_guard.h"
 

@@ -43,6 +43,7 @@
 #include "pre_guard.h"
 #include <QAccessibleInterface>
 #include <QAccessibleWidget>
+#include <QAccessibleTextCursorEvent>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMimeData>
@@ -50,6 +51,7 @@
 #include <QShortcut>
 #include <QTextBoundaryFinder>
 #include <QTextCodec>
+#include <QTextCursor>
 #include <QPainter>
 #include "post_guard.h"
 
@@ -2302,6 +2304,42 @@ void TConsole::slot_adjustAccessibleNames()
 void TConsole::mouseReleaseEvent(QMouseEvent* event)
 {
     raiseMudletMousePressOrReleaseEvent(event, false);
+}
+
+void TConsole::focusOutEvent(QFocusEvent* event)
+{
+    QWidget::focusOutEvent(event);
+
+    if (mUpperPane && mUpperPane->hasFocus()) {
+        mLastFocusedPane = mUpperPane;
+        mLastCursorPosition = mUpperPane->textCursor().position();
+    } else if (mLowerPane && mLowerPane->hasFocus()) {
+        mLastFocusedPane = mLowerPane;
+        mLastCursorPosition = mLowerPane->textCursor().position();
+    } else {
+        mLastFocusedPane = nullptr;
+    }
+}
+
+void TConsole::focusInEvent(QFocusEvent* event)
+{
+    QWidget::focusInEvent(event);
+
+    if (!mLastFocusedPane) {
+        return;
+    }
+
+    mLastFocusedPane->setFocus(Qt::OtherFocusReason);
+    QTextCursor cursor = mLastFocusedPane->textCursor();
+    cursor.setPosition(mLastCursorPosition);
+    mLastFocusedPane->setTextCursor(cursor);
+
+    if (QAccessible::isActive()) {
+        QAccessibleEvent focusEvent(mLastFocusedPane, QAccessible::Focus);
+        QAccessible::updateAccessibility(&focusEvent);
+        QAccessibleTextCursorEvent cursorEvent(mLastFocusedPane, mLastCursorPosition);
+        QAccessible::updateAccessibility(&cursorEvent);
+    }
 }
 
 void TConsole::slot_changeControlCharacterHandling(const ControlCharacterMode mode)

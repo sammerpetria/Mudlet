@@ -6374,6 +6374,8 @@ void mudlet::changeEvent(QEvent* event)
     if (event->type() == QEvent::WindowStateChange) {
         emit signal_windowStateChanged(windowState());
     } else if (event->type() == QEvent::ActivationChange) {
+        // prevents ALT+TAB system switching auto refocusing to command line
+        // remember the widget that had focus before deactivation to resume later
         if (isActiveWindow()) {
             if (mpFocusWidgetBeforeDeactivate) {
                 mpFocusWidgetBeforeDeactivate->setFocus();

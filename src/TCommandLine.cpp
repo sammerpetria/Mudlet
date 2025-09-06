@@ -245,6 +245,11 @@ bool TCommandLine::event(QEvent* event)
             break;
 
         case Qt::Key_Tab:
+            if (ke->modifiers() & Qt::AltModifier) {
+                // Allow system application switching without refocusing the command line
+                return false;
+            }
+
             if ((mpHost->mCaretShortcut == Host::CaretShortcut::Tab && !(ke->modifiers() & Qt::ControlModifier)) ||
                 (mpHost->mCaretShortcut == Host::CaretShortcut::CtrlTab && (ke->modifiers() & Qt::ControlModifier))) {
                 mpHost->setCaretEnabled(true);

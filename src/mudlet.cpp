@@ -6374,6 +6374,14 @@ void mudlet::changeEvent(QEvent* event)
     if (event->type() == QEvent::WindowStateChange) {
         emit signal_windowStateChanged(windowState());
     } else if (event->type() == QEvent::ActivationChange) {
+        if (isActiveWindow()) {
+            if (mpFocusWidgetBeforeDeactivate) {
+                mpFocusWidgetBeforeDeactivate->setFocus();
+                mpFocusWidgetBeforeDeactivate.clear();
+            }
+        } else {
+            mpFocusWidgetBeforeDeactivate = QApplication::focusWidget();
+        }
         // Update window menu when window activation changes
         updateWindowMenu();
     }

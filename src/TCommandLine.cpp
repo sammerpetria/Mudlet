@@ -246,7 +246,7 @@ bool TCommandLine::event(QEvent* event)
 
         case Qt::Key_Tab:
             if (ke->modifiers() & Qt::AltModifier) {
-                // Allow system application switching without refocusing the command line
+                // prevents ALT+TAB system switching auto refocusing to command line
                 return false;
             }
 

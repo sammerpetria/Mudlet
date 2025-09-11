@@ -38,6 +38,7 @@
 #include <QRegularExpression>
 #include <QScrollBar>
 #include <QSaveFile>
+#include <QAccessible>
 #include <QToolButton>
 #include <QIcon>
 #include "post_guard.h"
@@ -1267,6 +1268,10 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
     }
     c.setCharFormat(f);
     setTextCursor(c);
+    if (QAccessible::isActive()) {
+        QAccessibleEvent event(this, QAccessible::TextAttributeChanged);
+        QAccessible::updateAccessibility(&event);
+    }
     mSpellChecking = false;
 }
 

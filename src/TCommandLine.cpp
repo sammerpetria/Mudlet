@@ -125,6 +125,18 @@ TCommandLine::TCommandLine(Host* pHost, const QString& name, CommandLineType typ
 
 void TCommandLine::processNormalKey(QEvent* event)
 {
+    auto* ke = dynamic_cast<QKeyEvent*>(event);
+    if (!ke) {
+        QPlainTextEdit::event(event);
+        adjustHeight();
+        return;
+    }
+
+    QTextCursor oldCursor = textCursor();
+    oldCursor.select(QTextCursor::WordUnderCursor);
+    const int wordStart = oldCursor.selectionStart();
+    const int wordEnd = oldCursor.selectionEnd();
+
     QPlainTextEdit::event(event);
     adjustHeight();
 
@@ -135,7 +147,23 @@ void TCommandLine::processNormalKey(QEvent* event)
     } else {
         mUserKeptOnTyping = false;
     }
-    spellCheck();
+
+    bool isDelimiter = false;
+    const QString text = ke->text();
+    if (!text.isEmpty()) {
+        const QChar ch = text.at(0);
+        isDelimiter = ch.isSpace() || ch.isPunct();
+    }
+
+    bool leftWord = false;
+    if (text.isEmpty() && !isDelimiter) {
+        const int pos = this->textCursor().position();
+        leftWord = pos < wordStart || pos > wordEnd;
+    }
+
+    if (isDelimiter || leftWord) {
+        spellCheck();
+    }
 }
 
 bool TCommandLine::keybindingMatched(QKeyEvent* keyEvent)

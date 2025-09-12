@@ -1214,6 +1214,18 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
     QTextCharFormat f;
     mSpellChecking = true;
     c.select(QTextCursor::WordUnderCursor);
+
+    if (!c.atBlockEnd() && !c.atEnd()) {
+        const QChar nextChar = document()->characterAt(c.position());
+        if (!nextChar.isSpace() && !nextChar.isPunct()) {
+            f.setFontUnderline(false);
+            c.setCharFormat(f);
+            setTextCursor(c);
+            mSpellChecking = false;
+            return;
+        }
+    }
+
     const QTextCharFormat oldFormat = c.charFormat();
     const QString spellCheckedWord = c.selectedText();
     const bool wantSpellCheck = TBuffer::lengthInGraphemes(spellCheckedWord) >= mudlet::self()->mMinLengthForSpellCheck;

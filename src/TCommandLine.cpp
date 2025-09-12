@@ -155,14 +155,20 @@ void TCommandLine::processNormalKey(QEvent* event)
         isDelimiter = ch.isSpace() || ch.isPunct();
     }
 
+    const bool isDeletionKey = ke->key() == Qt::Key_Backspace || ke->key() == Qt::Key_Delete;
     bool leftWord = false;
-    if (text.isEmpty() && !isDelimiter) {
+    if (isDeletionKey) {
         const int pos = this->textCursor().position();
         leftWord = pos < wordStart || pos > wordEnd;
     }
 
     if (isDelimiter || leftWord) {
-        spellCheck();
+        QTextCursor currentCursor = textCursor();
+        spellCheckWord(oldCursor);
+        QTextCharFormat f;
+        f.setFontUnderline(false);
+        currentCursor.setCharFormat(f);
+        setTextCursor(currentCursor);
     }
 }
 

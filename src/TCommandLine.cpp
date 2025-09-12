@@ -1215,15 +1215,10 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
     mSpellChecking = true;
     c.select(QTextCursor::WordUnderCursor);
 
+    bool hasWordBoundary = true;
     if (!c.atBlockEnd() && !c.atEnd()) {
         const QChar nextChar = document()->characterAt(c.position());
-        if (!nextChar.isSpace() && !nextChar.isPunct()) {
-            f.setFontUnderline(false);
-            c.setCharFormat(f);
-            setTextCursor(c);
-            mSpellChecking = false;
-            return;
-        }
+        hasWordBoundary = nextChar.isSpace() || nextChar.isPunct();
     }
 
     const QTextCharFormat oldFormat = c.charFormat();
@@ -1274,7 +1269,7 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
         f.setFontUnderline(false);
     }
 
-    if (isMisspelled && QAccessible::isActive() && oldFormat.underlineStyle() != QTextCharFormat::SpellCheckUnderline) {
+    if (isMisspelled && QAccessible::isActive() && hasWordBoundary && oldFormat.underlineStyle() != QTextCharFormat::SpellCheckUnderline) {
         //: Screen reader notification when a misspelled word is detected
         mudlet::self()->announce(tr("spelling mistake"));
     }

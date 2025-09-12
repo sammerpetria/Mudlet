@@ -39,6 +39,7 @@
 #include <QScrollBar>
 #include <QSaveFile>
 #include <QAccessible>
+#include <QAccessibleAnnouncementEvent>
 #include <QToolButton>
 #include <QIcon>
 #include "post_guard.h"
@@ -1235,6 +1236,7 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
         return;
     }
 
+    bool misspelled = false;
     // The dictionary used from "the system" may not be UTF-8 encoded so we
     // will need to transform the UTF-16BE "QString" to the appropriate encoding
     // using the correct "codec":
@@ -1255,11 +1257,13 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
                 // The word is not in it either:
                 f.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
                 f.setUnderlineColor(Qt::red);
+                misspelled = true;
             }
         } else {
             // The word is not in the main dictionary and that is all we are using:
             f.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
             f.setUnderlineColor(Qt::red);
+            misspelled = true;
         }
 
     } else {
@@ -1269,6 +1273,11 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
     c.setCharFormat(f);
     setTextCursor(c);
     if (QAccessible::isActive()) {
+        if (misspelled) {
+            QAccessibleAnnouncementEvent announce(this, tr("Spelling mistake"));
+            announce.setPoliteness(QAccessible::AnnouncementPoliteness::Assertive);
+            QAccessible::updateAccessibility(&announce);
+        }
         QAccessibleEvent event(this, QAccessible::TextAttributeChanged);
         QAccessible::updateAccessibility(&event);
     }

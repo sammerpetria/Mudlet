@@ -1214,6 +1214,7 @@ void TCommandLine::spellCheckWord(QTextCursor& c)
     QTextCharFormat f;
     mSpellChecking = true;
     c.select(QTextCursor::WordUnderCursor);
+
     bool hasWordBoundary = true;
     if (!c.atBlockEnd() && !c.atEnd()) {
         const QChar nextChar = document()->characterAt(c.position());

@@ -233,8 +233,7 @@ public slots:
     void slot_variableChanged(QTreeWidgetItem*);
     void slot_showVariables();
     void slot_viewErrorsAction();
-    void slot_setupPatternControls(const int);
-    void slot_addPattern();
+    void slot_setupPatternControls(const int);    
     void slot_soundTrigger();
     void slot_colorizeTriggerSetBgColor();
     void slot_colorizeTriggerSetFgColor();

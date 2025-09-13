@@ -234,6 +234,7 @@ public slots:
     void slot_showVariables();
     void slot_viewErrorsAction();
     void slot_setupPatternControls(const int);
+    void slot_addPattern();
     void slot_soundTrigger();
     void slot_colorizeTriggerSetBgColor();
     void slot_colorizeTriggerSetFgColor();
@@ -548,7 +549,7 @@ private:
     bool mIsGrabKey = false;
     QPointer<Host> mpHost;
     QList<dlgTriggerPatternEdit*> mTriggerPatternEdit;
-    
+
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;

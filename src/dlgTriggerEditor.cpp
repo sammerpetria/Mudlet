@@ -1033,6 +1033,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
 
     lay1->addStretch();
 
+
     showPatternItems(2);
 
     connect(mpHost, &Host::signal_editorThemeChanged, this, &dlgTriggerEditor::slot_editorThemeChanged);
@@ -1131,6 +1132,7 @@ void dlgTriggerEditor::showPatternItems(int count)
         }
     }
 
+
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
 }
@@ -1149,6 +1151,13 @@ void dlgTriggerEditor::updatePatternPlaceholders()
         }
     }
 }
+
+
+void dlgTriggerEditor::slot_addPattern()
+{
+    showPatternItems(mVisiblePatternCount + 1);
+}
+
 
 void dlgTriggerEditor::slot_hideVariable(bool status)
 {
@@ -6255,6 +6264,7 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
     updatePatternPlaceholders();
+
 
 }
 

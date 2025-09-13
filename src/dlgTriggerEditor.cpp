@@ -1030,13 +1030,8 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
 
     mPatternIcons = {icon_subString, icon_perl_regex, icon_begin_of_line_substring, icon_exact_match, icon_lua_function, icon_line_spacer, icon_color_trigger, icon_prompt};
 
-    mpAddPatternButton = new QPushButton(qsl("+"), mpWidget_triggerItems);
-    mpAddPatternButton->setToolTip(tr("Add pattern"));
-    lay1->addWidget(mpAddPatternButton);
 
     lay1->addStretch();
-
-    connect(mpAddPatternButton, &QPushButton::clicked, this, &dlgTriggerEditor::slot_addPattern);
 
     showPatternItems(2);
 
@@ -1112,10 +1107,6 @@ void dlgTriggerEditor::createPatternItem(int index)
     QFont font = mpHost->getDisplayFont();
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
-
-    if (index == 0) {
-        pItem->singleLineTextEdit_pattern->setPlaceholderText(tr("Text to find (trigger pattern)"));
-    }
 }
 
 void dlgTriggerEditor::showPatternItems(int count)
@@ -1139,13 +1130,24 @@ void dlgTriggerEditor::showPatternItems(int count)
             pItem->hide();
         }
     }
-    mpAddPatternButton->setVisible(count < 50);
+
     mVisiblePatternCount = count;
+    updatePatternPlaceholders();
 }
 
-void dlgTriggerEditor::slot_addPattern()
+void dlgTriggerEditor::updatePatternPlaceholders()
 {
-    showPatternItems(mVisiblePatternCount + 1);
+    for (int i = 0; i < mVisiblePatternCount; ++i) {
+        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
+    }
+
+    for (int i = 0; i < mVisiblePatternCount; ++i) {
+        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
+        if (edit->toPlainText().isEmpty()) {
+            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
+            break;
+        }
+    }
 }
 
 void dlgTriggerEditor::slot_hideVariable(bool status)
@@ -6252,6 +6254,8 @@ void dlgTriggerEditor::slot_changedPattern()
             showPatternItems(mVisiblePatternCount + 1);
         }
     }
+    updatePatternPlaceholders();
+
 }
 
 // This can get called after the lineEdit contents has changed and it is now a

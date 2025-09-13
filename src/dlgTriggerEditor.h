@@ -463,6 +463,8 @@ private:
     void setupPatternControls(const int type, dlgTriggerPatternEdit* pItem);
     void createPatternItem(int index);
     void showPatternItems(int count);
+    void updatePatternPlaceholders();
+
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);
@@ -546,7 +548,7 @@ private:
     bool mIsGrabKey = false;
     QPointer<Host> mpHost;
     QList<dlgTriggerPatternEdit*> mTriggerPatternEdit;
-    QPushButton* mpAddPatternButton = nullptr;
+    
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;

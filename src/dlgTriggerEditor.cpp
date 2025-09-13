@@ -6274,6 +6274,7 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
 
+
     // Remove trailing blank pattern widgets and keep only a single empty
     // placeholder, mirroring the state of a newly created trigger
     int lastActive = -1;
@@ -6286,7 +6287,9 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
 
+
     const int desiredCount = qMax(lastActive + 2, 2); // last active + one blank
+
     if (desiredCount != mVisiblePatternCount) {
         showPatternItems(desiredCount);
     } else {

@@ -1121,9 +1121,17 @@ void dlgTriggerEditor::showPatternItems(int count)
         if (i < count) {
             pItem->show();
         } else {
-            pItem->singleLineTextEdit_pattern->clear();
-            lineEditShouldMarkSpaces[pItem->singleLineTextEdit_pattern] = false;
-            pItem->comboBox_patternType->setCurrentIndex(0);
+            auto* edit = pItem->singleLineTextEdit_pattern;
+            edit->blockSignals(true);
+            edit->clear();
+            edit->blockSignals(false);
+            lineEditShouldMarkSpaces[edit] = false;
+
+            auto* combo = pItem->comboBox_patternType;
+            combo->blockSignals(true);
+            combo->setCurrentIndex(0);
+            combo->blockSignals(false);
+
             pItem->pushButton_fgColor->hide();
             pItem->pushButton_bgColor->hide();
             pItem->label_prompt->hide();

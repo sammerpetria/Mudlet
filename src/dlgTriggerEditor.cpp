@@ -1091,7 +1091,9 @@ void dlgTriggerEditor::createPatternItem(int index)
     connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_changedPattern);
     connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_itemEdited);
 
-    mpWidget_triggerItems->layout()->insertWidget(mpWidget_triggerItems->layout()->count() - 1, pItem);
+    auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
+    pLayout->insertWidget(pLayout->count() - 1, pItem);
+
 
     mTriggerPatternEdit.push_back(pItem);
     pItem->mRow = index;

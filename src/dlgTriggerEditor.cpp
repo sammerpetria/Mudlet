@@ -6263,9 +6263,24 @@ void dlgTriggerEditor::slot_changedPattern()
             showPatternItems(mVisiblePatternCount + 1);
         }
     }
-    updatePatternPlaceholders();
 
+    // Remove trailing blank pattern widgets and keep only one empty pattern
+    int lastActive = -1;
+    for (int i = 0; i < mVisiblePatternCount; ++i) {
+        auto* pItem = mTriggerPatternEdit[i];
+        const bool hasText = !pItem->singleLineTextEdit_pattern->toPlainText().isEmpty();
+        const int type = pItem->comboBox_patternType->currentIndex();
+        if (hasText || type == REGEX_PROMPT || type == REGEX_LINE_SPACER) {
+            lastActive = i;
+        }
+    }
 
+    const int desiredCount = qMax(lastActive + 2, 2);
+    if (desiredCount != mVisiblePatternCount) {
+        showPatternItems(desiredCount);
+    } else {
+        updatePatternPlaceholders();
+    }
 }
 
 // This can get called after the lineEdit contents has changed and it is now a

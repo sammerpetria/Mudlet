@@ -1121,9 +1121,17 @@ void dlgTriggerEditor::showPatternItems(int count)
         if (i < count) {
             pItem->show();
         } else {
-            pItem->singleLineTextEdit_pattern->clear();
-            lineEditShouldMarkSpaces[pItem->singleLineTextEdit_pattern] = false;
-            pItem->comboBox_patternType->setCurrentIndex(0);
+            auto* edit = pItem->singleLineTextEdit_pattern;
+            edit->blockSignals(true);
+            edit->clear();
+            edit->blockSignals(false);
+            lineEditShouldMarkSpaces[edit] = false;
+
+            auto* combo = pItem->comboBox_patternType;
+            combo->blockSignals(true);
+            combo->setCurrentIndex(0);
+            combo->blockSignals(false);
+
             pItem->pushButton_fgColor->hide();
             pItem->pushButton_bgColor->hide();
             pItem->label_prompt->hide();
@@ -6263,9 +6271,24 @@ void dlgTriggerEditor::slot_changedPattern()
             showPatternItems(mVisiblePatternCount + 1);
         }
     }
-    updatePatternPlaceholders();
 
+    // Remove trailing blank pattern widgets and keep only one empty pattern
+    int lastActive = -1;
+    for (int i = 0; i < mVisiblePatternCount; ++i) {
+        auto* pItem = mTriggerPatternEdit[i];
+        const bool hasText = !pItem->singleLineTextEdit_pattern->toPlainText().isEmpty();
+        const int type = pItem->comboBox_patternType->currentIndex();
+        if (hasText || type == REGEX_PROMPT || type == REGEX_LINE_SPACER) {
+            lastActive = i;
+        }
+    }
 
+    const int desiredCount = qMax(lastActive + 2, 2);
+    if (desiredCount != mVisiblePatternCount) {
+        showPatternItems(desiredCount);
+    } else {
+        updatePatternPlaceholders();
+    }
 }
 
 // This can get called after the lineEdit contents has changed and it is now a

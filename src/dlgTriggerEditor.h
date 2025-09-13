@@ -313,6 +313,7 @@ private slots:
     void slot_itemEdited();
     void slot_searchSplitterMoved(const int pos, const int index);
     void slot_clickedMessageBox(const QString&);
+    void slot_addPattern();
 
 public:
     TConsole* mpErrorConsole = nullptr;
@@ -463,6 +464,7 @@ private:
     void createPatternItem(int index);
     void showPatternItems(int count);
     void updatePatternPlaceholders();
+
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);
@@ -546,6 +548,7 @@ private:
     bool mIsGrabKey = false;
     QPointer<Host> mpHost;
     QList<dlgTriggerPatternEdit*> mTriggerPatternEdit;
+    
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;

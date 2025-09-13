@@ -1033,7 +1033,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
     mpAddPatternButton = new QPushButton(qsl("+"), mpWidget_triggerItems);
     mpAddPatternButton->setToolTip(tr("Add pattern"));
     lay1->addWidget(mpAddPatternButton);
+
     lay1->addStretch();
+
     connect(mpAddPatternButton, &QPushButton::clicked, this, &dlgTriggerEditor::slot_addPattern);
 
     showPatternItems(2);

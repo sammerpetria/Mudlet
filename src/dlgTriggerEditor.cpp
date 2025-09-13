@@ -1121,6 +1121,8 @@ void dlgTriggerEditor::showPatternItems(int count)
         if (i < count) {
             pItem->show();
         } else {
+            // Clear hidden widgets without emitting change signals to
+            // avoid triggering slot_changedPattern recursively
             auto* edit = pItem->singleLineTextEdit_pattern;
             edit->blockSignals(true);
             edit->clear();
@@ -6272,7 +6274,9 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
 
-    // Remove trailing blank pattern widgets and keep only one empty pattern
+
+    // Remove trailing blank pattern widgets and keep only a single empty
+    // placeholder, mirroring the state of a newly created trigger
     int lastActive = -1;
     for (int i = 0; i < mVisiblePatternCount; ++i) {
         auto* pItem = mTriggerPatternEdit[i];
@@ -6283,7 +6287,9 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
 
-    const int desiredCount = qMax(lastActive + 2, 2);
+
+    const int desiredCount = qMax(lastActive + 2, 2); // last active + one blank
+
     if (desiredCount != mVisiblePatternCount) {
         showPatternItems(desiredCount);
     } else {

@@ -991,6 +991,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
     auto lay1 = new QVBoxLayout(mpWidget_triggerItems);
     lay1->setContentsMargins(0, 0, 0, 0);
     lay1->setSpacing(0);
+    lay1->setAlignment(Qt::AlignTop);
     mpScrollArea->setWidget(mpWidget_triggerItems);
 
     QPixmap pixMap_subString(256, 256);
@@ -1032,6 +1033,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
     mpAddPatternButton = new QPushButton(qsl("+"), mpWidget_triggerItems);
     mpAddPatternButton->setToolTip(tr("Add pattern"));
     lay1->addWidget(mpAddPatternButton);
+
+    lay1->addStretch();
+
     connect(mpAddPatternButton, &QPushButton::clicked, this, &dlgTriggerEditor::slot_addPattern);
 
     showPatternItems(2);
@@ -1093,7 +1097,6 @@ void dlgTriggerEditor::createPatternItem(int index)
 
     auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
     pLayout->insertWidget(pLayout->count() - 1, pItem);
-
 
     mTriggerPatternEdit.push_back(pItem);
     pItem->mRow = index;

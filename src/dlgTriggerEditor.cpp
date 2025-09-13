@@ -1030,7 +1030,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH) : mpHost(pH), mSearchOptions(pH->mS
 
     mPatternIcons = {icon_subString, icon_perl_regex, icon_begin_of_line_substring, icon_exact_match, icon_lua_function, icon_line_spacer, icon_color_trigger, icon_prompt};
 
+
     lay1->addStretch();
+
 
     showPatternItems(2);
 
@@ -1129,6 +1131,8 @@ void dlgTriggerEditor::showPatternItems(int count)
             pItem->hide();
         }
     }
+
+
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
 }
@@ -1148,10 +1152,12 @@ void dlgTriggerEditor::updatePatternPlaceholders()
     }
 }
 
+
 void dlgTriggerEditor::slot_addPattern()
 {
     showPatternItems(mVisiblePatternCount + 1);
 }
+
 
 void dlgTriggerEditor::slot_hideVariable(bool status)
 {
@@ -6258,6 +6264,8 @@ void dlgTriggerEditor::slot_changedPattern()
         }
     }
     updatePatternPlaceholders();
+
+
 }
 
 // This can get called after the lineEdit contents has changed and it is now a

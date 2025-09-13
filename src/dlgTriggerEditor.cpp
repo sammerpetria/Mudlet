@@ -1094,6 +1094,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
     pLayout->insertWidget(pLayout->count() - 1, pItem);
 
+
     mTriggerPatternEdit.push_back(pItem);
     pItem->mRow = index;
     pItem->pushButton_fgColor->hide();

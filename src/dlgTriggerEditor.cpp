@@ -54,13 +54,15 @@
 #include <QFileDialog>
 #include <QFont>
 #include <QLabel>
+#include <QMargins>
 #include <QMessageBox>
+#include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
+#include <QTextCursor>
 #include <QToolBar>
 #include <QVBoxLayout>
-#include <QTextCursor>
 
 #include "post_guard.h"
 
@@ -1195,6 +1197,7 @@ void dlgTriggerEditor::showPatternItems(int count)
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
     updatePatternTabOrder();
+    updatePatternNavigationHint();
 }
 
 void dlgTriggerEditor::updatePatternPlaceholders()
@@ -1295,6 +1298,35 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     if (!mPatternNavigationHint) {
         return;
     }
+
+    int leftMargin = 0;
+    if (mpWidget_triggerItems) {
+        const QPoint hintPos = mPatternNavigationHint->mapTo(mpWidget_triggerItems, QPoint());
+        const int itemCount = qMin(mVisiblePatternCount, mTriggerPatternEdit.size());
+        for (int i = 0; i < itemCount; ++i) {
+            auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+            if (!patternItem || !patternItem->isVisible()) {
+                continue;
+            }
+
+            auto* edit = patternItem->singleLineTextEdit_pattern;
+            if (!edit || !edit->isVisible()) {
+                continue;
+            }
+
+            const QPoint editPos = edit->mapTo(mpWidget_triggerItems, QPoint());
+            leftMargin = qMax(0, editPos.x() - hintPos.x());
+            break;
+        }
+    }
+
+    const int topMargin = qMax(0, mPatternNavigationHint->fontMetrics().lineSpacing());
+    const QMargins currentMargins = mPatternNavigationHint->contentsMargins();
+    if (currentMargins.left() != leftMargin || currentMargins.top() != topMargin) {
+        mPatternNavigationHint->setContentsMargins(leftMargin, topMargin, 0, 0);
+    }
+
+    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
     mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
@@ -6419,6 +6451,8 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
     updatePatternPlaceholders();
+    updatePatternNavigationHint();
+
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)

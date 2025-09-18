@@ -568,6 +568,7 @@ private:
     
     QShortcut* mFirstPatternShortcut = nullptr;
     QShortcut* mLastPatternShortcut = nullptr;
+    QVector<QShortcut*> mPatternNavigationShortcuts;
     bool mChangingVar = false;
 
     QTextDocument* mpSourceEditorDocument = nullptr;

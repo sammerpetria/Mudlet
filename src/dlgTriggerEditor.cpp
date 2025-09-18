@@ -6461,12 +6461,18 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
     checkForMoreThanOneTriggerItem();
 
     bool hasContent = hasContentHint;
+    bool forceLineSpacerActive = false;
     if (patternItem) {
         const int type = patternItem->comboBox_patternType->currentIndex();
         if (type == REGEX_PROMPT) {
             hasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
-            hasContent = patternItem->spinBox_lineSpacer->value() > 0;
+            forceLineSpacerActive = hasContentHint;
+            if (!forceLineSpacerActive) {
+                hasContent = patternItem->spinBox_lineSpacer->value() > 0;
+            } else {
+                hasContent = true;
+            }
         }
 
         if (patternItem->mRow == mVisiblePatternCount - 1 && hasContent && mVisiblePatternCount < 50) {
@@ -6483,6 +6489,9 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
             itemHasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
             itemHasContent = item->spinBox_lineSpacer->value() > 0;
+            if (forceLineSpacerActive && item == patternItem) {
+                itemHasContent = true;
+            }
         }
 
         if (itemHasContent) {
@@ -6766,6 +6775,10 @@ void dlgTriggerEditor::slot_setupPatternControls(int type)
             pPatternItem->singleLineTextEdit_pattern->clear();
         }
     }
+
+    const bool hasText = !pPatternItem->singleLineTextEdit_pattern->toPlainText().isEmpty();
+    const bool treatAsContent = hasText || type == REGEX_PROMPT || type == REGEX_LINE_SPACER;
+    handlePatternChange(pPatternItem, treatAsContent);
 }
 
 void dlgTriggerEditor::slot_triggerSelected(QTreeWidgetItem* pItem)

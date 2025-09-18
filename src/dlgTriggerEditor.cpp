@@ -1155,6 +1155,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
+    pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 
@@ -1197,15 +1198,41 @@ void dlgTriggerEditor::showPatternItems(int count)
 void dlgTriggerEditor::updatePatternPlaceholders()
 {
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
-    }
-
-    for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
-        if (edit->toPlainText().isEmpty()) {
-            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-            break;
+        auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+        if (!patternItem) {
+            continue;
         }
+
+        auto* edit = patternItem->singleLineTextEdit_pattern;
+        if (!edit) {
+            continue;
+        }
+
+        if (!edit->isVisible() || !edit->toPlainText().isEmpty()) {
+            edit->setPlaceholderText(QString());
+            continue;
+        }
+
+        const QString placeholder = patternPlaceholderText(patternItem->comboBox_patternType->currentIndex());
+        edit->setPlaceholderText(placeholder);
+    }
+}
+
+QString dlgTriggerEditor::patternPlaceholderText(const int patternType) const
+{
+    switch (patternType) {
+    case REGEX_SUBSTRING:
+        return tr("Text to find (anywhere in the game output)");
+    case REGEX_PERL:
+        return tr("Text to find (as a regular expression pattern)");
+    case REGEX_BEGIN_OF_LINE_SUBSTRING:
+        return tr("Text to find (from beginning of the line)");
+    case REGEX_EXACT_MATCH:
+        return tr("Exact line to match");
+    case REGEX_LUA_CODE:
+        return tr("Lua code to run (return true to match)");
+    default:
+        return QString();
     }
 }
 
@@ -6389,6 +6416,7 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
 
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
+    updatePatternPlaceholders();
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)

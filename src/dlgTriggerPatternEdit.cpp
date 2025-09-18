@@ -21,11 +21,8 @@
 
 
 #include "dlgTriggerPatternEdit.h"
-#include "TTrigger.h"
 
 #include "pre_guard.h"
-#include <QAction>
-#include <QDebug>
 #include "post_guard.h"
 
 dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
@@ -41,26 +38,4 @@ void dlgTriggerPatternEdit::slot_triggerTypeComboBoxChanged(const int index)
 {
     label_colorIcon->setPixmap(comboBox_patternType->itemIcon(index).pixmap(15, 15));
 
-    const bool firstRow = comboBox_patternType->itemData(0).toInt() == 0;
-    if (!firstRow) {
-        return;
-    }
-
-    switch (comboBox_patternType->currentIndex()) {
-    case REGEX_SUBSTRING:
-        singleLineTextEdit_pattern->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-        break;
-    case REGEX_PERL:
-        singleLineTextEdit_pattern->setPlaceholderText(tr("Text to find (as a regular expression pattern)"));
-        break;
-    case REGEX_BEGIN_OF_LINE_SUBSTRING:
-        singleLineTextEdit_pattern->setPlaceholderText(tr("Text to find (from beginning of the line)"));
-        break;
-    case REGEX_EXACT_MATCH:
-        singleLineTextEdit_pattern->setPlaceholderText(tr("Exact line to match"));
-        break;
-    case REGEX_LUA_CODE:
-        singleLineTextEdit_pattern->setPlaceholderText(tr("Lua code to run (return true to match)"));
-        break;
-    }
 }

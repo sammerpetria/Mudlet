@@ -1176,8 +1176,17 @@ void dlgTriggerEditor::showPatternItems(int count)
 
     for (int i = 0; i < mTriggerPatternEdit.size(); ++i) {
         auto* pItem = mTriggerPatternEdit[i];
+        if (!pItem) {
+            continue;
+        }
+
         if (i < count) {
             pItem->show();
+
+            const int currentType = pItem->comboBox_patternType->currentIndex();
+            if (currentType >= 0) {
+                pItem->slot_triggerTypeComboBoxChanged(currentType);
+            }
         } else {
             auto* edit = pItem->singleLineTextEdit_pattern;
             edit->blockSignals(true);
@@ -1187,8 +1196,10 @@ void dlgTriggerEditor::showPatternItems(int count)
 
             auto* combo = pItem->comboBox_patternType;
             combo->blockSignals(true);
-            combo->setCurrentIndex(0);
+            combo->setCurrentIndex(REGEX_SUBSTRING);
             combo->blockSignals(false);
+
+            pItem->slot_triggerTypeComboBoxChanged(REGEX_SUBSTRING);
 
             pItem->pushButton_fgColor->hide();
             pItem->pushButton_bgColor->hide();

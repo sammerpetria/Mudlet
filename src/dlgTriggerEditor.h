@@ -89,10 +89,12 @@ class dlgAliasMainArea;
 class dlgScriptsMainArea;
 class dlgKeysMainArea;
 class dlgTriggerPatternEdit;
+class QLabel;
 class TAction;
 class TKey;
 class TConsole;
 class dlgVarsMainArea;
+class QShortcut;
 
 
 class dlgTriggerEditor : public QMainWindow, private Ui::trigger_editor
@@ -309,6 +311,7 @@ private slots:
     void slot_toggleSearchIncludeVariables(bool);
     void slot_toggleGroupBoxColorizeTrigger(const bool);
     void slot_changedPattern();
+    void slot_lineSpacerChanged(int value);
     void slot_clearSearchResults();
     void slot_clearSoundFile();
     void slot_editorContextMenu();
@@ -463,6 +466,8 @@ private:
     void createPatternItem(int index);
     void showPatternItems(int count);
     void updatePatternPlaceholders();
+    void handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint);
+
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);
@@ -477,6 +482,12 @@ private:
     TTimer* getTimerFromTreeItem(QTreeWidgetItem* item);
     TKey* getKeyFromTreeItem(QTreeWidgetItem* item);
     TAction* getActionFromTreeItem(QTreeWidgetItem* item);
+    void updatePatternTabOrder();
+    QWidget* firstFocusablePatternWidget(const dlgTriggerPatternEdit* patternItem) const;
+    bool focusNextPatternItem(const dlgTriggerPatternEdit* currentItem);
+    bool focusPatternItem(const int row, const Qt::FocusReason reason = Qt::TabFocusReason);
+    void setupPatternNavigationShortcuts();
+    void updatePatternNavigationHint();
 
 
     // PLACEMARKER 3/3 save button texts need to be kept in sync
@@ -528,6 +539,7 @@ private:
 
     QScrollArea* mpScrollArea = nullptr;
     QWidget* mpWidget_triggerItems = nullptr;
+    QLabel* mPatternNavigationHint = nullptr;
     // this widget holds the errors, trigger patterns, and all other widgets that aren't edbee
     // in it, as a workaround for an extra splitter getting created by Qt below the error msg otherwise
     QWidget *mpNonCodeWidgets = nullptr;
@@ -551,6 +563,8 @@ private:
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;
+    QVector<QShortcut*> mPatternNavigationShortcuts;
+    QShortcut* mLastPatternShortcut = nullptr;
     bool mChangingVar = false;
 
     QTextDocument* mpSourceEditorDocument = nullptr;

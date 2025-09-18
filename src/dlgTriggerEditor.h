@@ -29,10 +29,9 @@
 #include "pre_guard.h"
 #include "ui_trigger_editor.h"
 #include <QPointer>
-#include "post_guard.h"
 #include <unordered_map>
+#include "post_guard.h"
 
-#include "SingleLineTextEdit.h"
 #include "TAction.h"
 #include "TAlias.h"
 #include "TKey.h"
@@ -47,16 +46,16 @@
 #include "dlgTimersMainArea.h"
 #include "dlgTriggersMainArea.h"
 #include "dlgVarsMainArea.h"
+#include "SingleLineTextEdit.h"
 
 #include "pre_guard.h"
-#include <QTreeWidget>
-#include <QDesktopServices>
 #include <QDialog>
 #include <QFlag>
 #include <QIcon>
 #include <QListWidgetItem>
-#include <QPushButton>
 #include <QScrollArea>
+#include <QTreeWidget>
+#include <QDesktopServices>
 #include <QStringList>
 #include <QVector>
 #include "post_guard.h"
@@ -76,8 +75,8 @@
 #include "edbee/views/textselection.h"
 
 #include "edbee/models/textsearcher.h" // These three are required for search highlighting
-#include "edbee/views/textrenderer.h"
 #include "edbee/views/texttheme.h"
+#include "edbee/views/textrenderer.h"
 
 class dlgTimersMainArea;
 class dlgSystemMessageArea;
@@ -103,53 +102,53 @@ class dlgTriggerEditor : public QMainWindow, private Ui::trigger_editor
     enum SearchDataRole {
         // Value is the ID of the item found MUST BE Qt::UserRole to avoid
         // having to modify existing code that puts it into the item:
-        IdRole = Qt::UserRole,
+              IdRole = Qt::UserRole,
         // Was the "name" field inserted into the search widget tree {as
         // pItem->text(1)} but since we now suppress that for subsequent
         // elements for the same "item" we need to carry the same data
         // internally even when we do not insert the text in the display:
-        NameRole = Qt::UserRole + 1,
+            NameRole = Qt::UserRole + 1,
         // What the Item is (one of the cmXxxxxView values) so we know how to
         // interpret the search result:
-        ItemRole = Qt::UserRole + 2,
+            ItemRole = Qt::UserRole + 2,
         // Value of one of SearchDataResultType (below)
-        TypeRole = Qt::UserRole + 3,
+            TypeRole = Qt::UserRole + 3,
         // When the result is a pattern or event handler ("Script" item) type or
         // lua script this is the pattern number (0-49 for "Triggers"), (event
         // handler index for "Scripts") or script line (so we know which
         // field/line to jump to)
-        PatternOrLineRole = Qt::UserRole + 4,
+   PatternOrLineRole = Qt::UserRole + 4,
         // Value is the position (starting at 0, counting in QChars) of the
         // particular find used to position cursor at start of match:
         PositionRole = Qt::UserRole + 5,
         // Value is the index (starting at 0) of the particular find used to
         // disambiguate multiple finds in the same "thing" (so we know which one
         // to jump to) - may not be as much use as it seems...
-        IndexRole = Qt::UserRole + 6
+           IndexRole = Qt::UserRole + 6
     };
 
     // Classify the search result - so we know where to position the cursor as
     // we implement moving the focus to the origin of the result:
     enum SearchDataResultType {
         // Unset (?):
-        SearchResultIsUnknown = 0x0,
+               SearchResultIsUnknown = 0x0,
         // The contents in the Edbee Editor widget:
-        SearchResultIsScript = 0x1,
+                SearchResultIsScript = 0x1,
         // The item's "Name":
-        SearchResultIsName = 0x2,
+                  SearchResultIsName = 0x2,
         // Only for "Triggers"/"Aliases" (and only the former has multiples):
-        SearchResultIsPattern = 0x3,
+               SearchResultIsPattern = 0x3,
         // All but "Variable" - the simple "Command":
-        SearchResultIsCommand = 0x4,
+               SearchResultIsCommand = 0x4,
         // Only Push-down "Buttons" - the additional "Up" "Command" field:
-        SearchResultIsExtraCommand = 0x5,
+          SearchResultIsExtraCommand = 0x5,
         // Only "Buttons" - "Css" - unlikely to be useful currently but might be
         //useful in future if we really get into stylesheets:
-        SearchResultsIsCss = 0x6,
+                  SearchResultsIsCss = 0x6,
         // Only "Scripts":
-        SearchResultIsEventHandler = 0x7,
+          SearchResultIsEventHandler = 0x7,
         // Only "Variables":
-        SearchResultIsValue = 0x8
+                 SearchResultIsValue = 0x8
     };
 
 public:
@@ -166,9 +165,18 @@ public:
     Q_DISABLE_COPY(dlgTriggerEditor)
     dlgTriggerEditor(Host*);
 
-    Q_DECLARE_FLAGS(SearchOptions, SearchOption)
+    Q_DECLARE_FLAGS(SearchOptions,SearchOption)
 
-    enum class EditorViewType { cmUnknownView = 0, cmTriggerView = 0x01, cmTimerView = 0x02, cmAliasView = 0x03, cmScriptView = 0x04, cmActionView = 0x05, cmKeysView = 0x06, cmVarsView = 0x07 };
+    enum class EditorViewType {
+        cmUnknownView = 0,
+        cmTriggerView = 0x01,
+        cmTimerView = 0x02,
+        cmAliasView = 0x03,
+        cmScriptView = 0x04,
+        cmActionView = 0x05,
+        cmKeysView = 0x06,
+        cmVarsView = 0x07
+    };
 
     void closeEvent(QCloseEvent* event) override;
     void focusInEvent(QFocusEvent*) override;
@@ -176,7 +184,7 @@ public:
     void enterEvent(TEnterEvent* event) override;
     bool eventFilter(QObject*, QEvent* event) override;
     bool event(QEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
+    void resizeEvent(QResizeEvent *event) override;
     void changeEvent(QEvent* e) override;
     void fillout_form();
     void showError(const QString&);
@@ -233,7 +241,7 @@ public slots:
     void slot_variableChanged(QTreeWidgetItem*);
     void slot_showVariables();
     void slot_viewErrorsAction();
-    void slot_setupPatternControls(const int);    
+    void slot_setupPatternControls(const int);
     void slot_soundTrigger();
     void slot_colorizeTriggerSetBgColor();
     void slot_colorizeTriggerSetFgColor();
@@ -275,13 +283,13 @@ public slots:
     void slot_saveEdits();
     void slot_copyXml();
     void slot_pasteXml();
-    // Not used:    void slot_choseActionIcon();
+// Not used:    void slot_choseActionIcon();
     void slot_showAllTriggerControls(const bool);
     void slot_rightSplitterMoved(const int pos, const int handle);
     void slot_scriptMainAreaDeleteHandler();
     void slot_scriptMainAreaAddHandler();
     void slot_scriptMainAreaEditHandler();
-    void slot_scriptMainAreaClearHandlerSelection(QListWidgetItem*);
+    void slot_scriptMainAreaClearHandlerSelection(QListWidgetItem *);
     void slot_keyGrab();
     void slot_profileSaveAction();
     void slot_profileSaveAsAction();
@@ -341,7 +349,7 @@ private:
     void addTrigger(bool);
     void addAction(bool);
     void addKey(bool);
-    void timerEvent(QTimerEvent* event) override;
+    void timerEvent(QTimerEvent *event) override;
 
     void selectTriggerByID(int id);
     void selectTimerByID(int id);
@@ -365,12 +373,12 @@ private:
     void expand_child_action(TAction*, QTreeWidgetItem*);
     void expand_child_key(TKey* pTriggerParent, QTreeWidgetItem* pWidgetItemParent);
 
-    void exportTrigger(const QString& fileName);
-    void exportTimer(const QString& fileName);
-    void exportAlias(const QString& fileName);
-    void exportAction(const QString& fileName);
-    void exportScript(const QString& fileName);
-    void exportKey(const QString& fileName);
+    void exportTrigger(const QString &fileName);
+    void exportTimer(const QString &fileName);
+    void exportAlias(const QString &fileName);
+    void exportAction(const QString &fileName);
+    void exportScript(const QString &fileName);
+    void exportKey(const QString &fileName);
 
     void exportTriggerToClipboard();
     void exportTimerToClipboard();
@@ -389,15 +397,7 @@ private:
 
     void clearDocument(edbee::TextEditorWidget* pEditorWidget, const QString& initialText = QString());
 
-    void setAllSearchData(QTreeWidgetItem* pItem,
-                          const EditorViewType& type,
-                          const QString& name,
-                          const int& id,
-                          const SearchDataResultType& what,
-                          const int& pos = 0,
-                          const int& instance = 0,
-                          const int& subInstance = 0)
-    {
+    void setAllSearchData(QTreeWidgetItem* pItem, const EditorViewType& type, const QString& name, const int& id, const SearchDataResultType& what, const int& pos = 0, const int& instance = 0, const int& subInstance = 0) {
         // Which is it? A Trigger, an alias etc:
         pItem->setData(0, ItemRole, static_cast<int>(type));
         // What is its name:
@@ -419,8 +419,7 @@ private:
         pItem->setData(0, IndexRole, subInstance);
     }
 
-    void setAllSearchData(QTreeWidgetItem* pItem, const QString& name, const QStringList& id, const SearchDataResultType& what, const int& pos = 0, const int& subInstance = 0)
-    {
+    void setAllSearchData(QTreeWidgetItem* pItem, const QString& name, const QStringList& id, const SearchDataResultType& what, const int& pos = 0, const int& subInstance = 0) {
         // Which is it? A Trigger, an alias etc:
         pItem->setData(0, ItemRole, static_cast<int>(EditorViewType::cmVarsView));
         // What is its name:
@@ -464,7 +463,6 @@ private:
     void createPatternItem(int index);
     void showPatternItems(int count);
     void updatePatternPlaceholders();
-
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);
@@ -482,25 +480,27 @@ private:
 
 
     // PLACEMARKER 3/3 save button texts need to be kept in sync
-    std::unordered_map<QString, QString> mButtonShortcuts = {{qsl("Save Item"), tr("Ctrl+S")},
-                                                             {tr("Save Trigger"), tr("Ctrl+S")},
-                                                             {tr("Save Timer"), tr("Ctrl+S")},
-                                                             {tr("Save Alias"), tr("Ctrl+S")},
-                                                             {tr("Save Script"), tr("Ctrl+S")},
-                                                             {tr("Save Button"), tr("Ctrl+S")},
-                                                             {tr("Save Key"), tr("Ctrl+S")},
-                                                             {tr("Save Variable"), tr("Ctrl+S")},
-                                                             {tr("Save Profile"), tr("Ctrl+Shift+S")},
-                                                             {tr("Triggers"), tr("Ctrl+1")},
-                                                             {tr("Aliases"), tr("Ctrl+2")},
-                                                             {tr("Scripts"), tr("Ctrl+3")},
-                                                             {tr("Timers"), tr("Ctrl+4")},
-                                                             {tr("Keys"), tr("Ctrl+5")},
-                                                             {tr("Variables"), tr("Ctrl+6")},
-                                                             {tr("Buttons"), tr("Ctrl+7")},
-                                                             {tr("Errors"), tr("Ctrl+8")},
-                                                             {tr("Statistics"), tr("Ctrl+9")},
-                                                             {tr("Debug"), tr("Ctrl+0")}};
+    std::unordered_map<QString, QString> mButtonShortcuts = {
+        {qsl("Save Item"),    tr("Ctrl+S")},
+        {tr("Save Trigger"),  tr("Ctrl+S")},
+        {tr("Save Timer"),    tr("Ctrl+S")},
+        {tr("Save Alias"),    tr("Ctrl+S")},
+        {tr("Save Script"),   tr("Ctrl+S")},
+        {tr("Save Button"),   tr("Ctrl+S")},
+        {tr("Save Key"),      tr("Ctrl+S")},
+        {tr("Save Variable"), tr("Ctrl+S")},
+        {tr("Save Profile"),  tr("Ctrl+Shift+S")},
+        {tr("Triggers"),   tr("Ctrl+1")},
+        {tr("Aliases"),    tr("Ctrl+2")},
+        {tr("Scripts"),    tr("Ctrl+3")},
+        {tr("Timers"),     tr("Ctrl+4")},
+        {tr("Keys"),       tr("Ctrl+5")},
+        {tr("Variables"),  tr("Ctrl+6")},
+        {tr("Buttons"),    tr("Ctrl+7")},
+        {tr("Errors"),     tr("Ctrl+8")},
+        {tr("Statistics"), tr("Ctrl+9")},
+        {tr("Debug"),      tr("Ctrl+0")}
+    };
 
     std::unordered_map<SingleLineTextEdit*, bool> lineEditShouldMarkSpaces;
 
@@ -530,7 +530,7 @@ private:
     QWidget* mpWidget_triggerItems = nullptr;
     // this widget holds the errors, trigger patterns, and all other widgets that aren't edbee
     // in it, as a workaround for an extra splitter getting created by Qt below the error msg otherwise
-    QWidget* mpNonCodeWidgets = nullptr;
+    QWidget *mpNonCodeWidgets = nullptr;
     dlgActionMainArea* mpActionsMainArea = nullptr;
     dlgAliasMainArea* mpAliasMainArea = nullptr;
     dlgKeysMainArea* mpKeysMainArea = nullptr;
@@ -548,7 +548,6 @@ private:
     bool mIsGrabKey = false;
     QPointer<Host> mpHost;
     QList<dlgTriggerPatternEdit*> mTriggerPatternEdit;
-
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;
@@ -618,16 +617,14 @@ private:
 
     // approximate max duration "Copy as image" can take in seconds
     int mCopyAsImageMax = 0;
-
-    struct introOption
-    {
+    
+    struct introOption {
         QString name;
         QString headline;
-        QString contents;
+        QString contents;  
     };
 
-    struct introTextParts
-    {
+    struct introTextParts {
         QString summary;
         QVector<introOption> options;
     };

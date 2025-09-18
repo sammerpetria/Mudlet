@@ -485,6 +485,8 @@ private:
     void updatePatternTabOrder();
     QWidget* firstFocusablePatternWidget(const dlgTriggerPatternEdit* patternItem) const;
     bool focusNextPatternItem(const dlgTriggerPatternEdit* currentItem);
+    bool focusPreviousPatternItem(const dlgTriggerPatternEdit* currentItem);
+
     bool focusPatternItem(const int row, const Qt::FocusReason reason = Qt::TabFocusReason);
     void setupPatternNavigationShortcuts();
     void updatePatternNavigationHint();
@@ -563,7 +565,8 @@ private:
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;
-    QVector<QShortcut*> mPatternNavigationShortcuts;
+    
+    QShortcut* mFirstPatternShortcut = nullptr;
     QShortcut* mLastPatternShortcut = nullptr;
     bool mChangingVar = false;
 

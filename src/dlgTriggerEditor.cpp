@@ -1209,6 +1209,57 @@ void dlgTriggerEditor::updatePatternPlaceholders()
     }
 }
 
+void dlgTriggerEditor::setupPatternNavigationShortcuts()
+{
+    if (mFirstPatternShortcut) {
+        mFirstPatternShortcut->deleteLater();
+        mFirstPatternShortcut = nullptr;
+    }
+    if (mLastPatternShortcut) {
+        mLastPatternShortcut->deleteLater();
+        mLastPatternShortcut = nullptr;
+    }
+
+    if (!mpTriggersMainArea) {
+        return;
+    }
+
+    mFirstPatternShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), mpTriggersMainArea);
+    mFirstPatternShortcut->setContext(Qt::WidgetWithChildrenShortcut);
+    connect(mFirstPatternShortcut, &QShortcut::activated, this, [this]() {
+        if (mVisiblePatternCount < 1) {
+            return;
+        }
+        focusPatternItem(0, Qt::ShortcutFocusReason);
+    });
+
+    mLastPatternShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), mpTriggersMainArea);
+    mLastPatternShortcut->setContext(Qt::WidgetWithChildrenShortcut);
+    connect(mLastPatternShortcut, &QShortcut::activated, this, [this]() {
+        if (mVisiblePatternCount < 1) {
+            return;
+        }
+        focusPatternItem(mVisiblePatternCount - 1, Qt::ShortcutFocusReason);
+    });
+
+    const bool enableShortcuts = mCurrentView == EditorViewType::cmTriggerView;
+    if (mFirstPatternShortcut) {
+        mFirstPatternShortcut->setEnabled(enableShortcuts);
+    }
+    if (mLastPatternShortcut) {
+        mLastPatternShortcut->setEnabled(enableShortcuts);
+    }
+}
+
+void dlgTriggerEditor::updatePatternNavigationHint()
+{
+    if (!mPatternNavigationHint) {
+        return;
+    }
+
+    //: Hint shown below trigger patterns explaining navigation shortcuts.
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields."));
+}
 
 void dlgTriggerEditor::setupPatternNavigationShortcuts()
 {
@@ -6504,6 +6555,26 @@ bool dlgTriggerEditor::focusNextPatternItem(const dlgTriggerPatternEdit* current
     return false;
 }
 
+
+bool dlgTriggerEditor::focusPreviousPatternItem(const dlgTriggerPatternEdit* currentItem)
+{
+    if (!currentItem) {
+        return false;
+    }
+
+    int previousRow = currentItem->mRow - 1;
+    while (previousRow >= 0) {
+        auto* previousItem = mTriggerPatternEdit.value(previousRow, nullptr);
+        if (previousItem && previousItem->isVisible()) {
+            return focusPatternItem(previousRow);
+        }
+        --previousRow;
+    }
+
+    return false;
+}
+
+
 void dlgTriggerEditor::updatePatternTabOrder()
 {
     if (!mpTriggersMainArea) {
@@ -6552,8 +6623,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
 
     addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
     addToChain(mpTriggersMainArea->lineEdit_trigger_command);
-    addToChain(mpSourceEditorEdbee);
-
     addToChain(mpTriggersMainArea->spinBox_stayOpen);
     addToChain(mpTriggersMainArea->groupBox_soundTrigger);
     addToChain(mpTriggersMainArea->pushButtonSound);
@@ -6564,6 +6633,8 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
+    addToChain(mpSourceEditorEdbee);
+
 }
 
 void dlgTriggerEditor::slot_changedPattern()
@@ -8618,10 +8689,9 @@ void dlgTriggerEditor::changeView(EditorViewType view)
     treeWidget_triggers->setVisible(view == EditorViewType::cmTriggerView);
 
     const bool enablePatternShortcuts = view == EditorViewType::cmTriggerView;
-    for (auto* shortcut : mPatternNavigationShortcuts) {
-        if (shortcut) {
-            shortcut->setEnabled(enablePatternShortcuts);
-        }
+
+    if (mFirstPatternShortcut) {
+        mFirstPatternShortcut->setEnabled(enablePatternShortcuts);
     }
     if (mLastPatternShortcut) {
         mLastPatternShortcut->setEnabled(enablePatternShortcuts);
@@ -10782,20 +10852,22 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        const bool isEnter = keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter;
-        if (isEnter && keyEvent->modifiers() == Qt::NoModifier) {
+        if (keyEvent->modifiers() == Qt::NoModifier) {
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
-                if (focusNextPatternItem(qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget()))) {
-                    return true;
-                }
-            } else if (auto* spinBox = qobject_cast<QSpinBox*>(watched)) {
-                if (focusNextPatternItem(qobject_cast<dlgTriggerPatternEdit*>(spinBox->parentWidget()))) {
-                    return true;
+                auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
+                if (keyEvent->key() == Qt::Key_Down) {
+                    if (focusNextPatternItem(patternItem)) {
+                        return true;
+                    }
+                } else if (keyEvent->key() == Qt::Key_Up) {
+                    if (focusPreviousPatternItem(patternItem)) {
+                        return true;
+                    }
                 }
             }
-
         }
     }
+
     return QMainWindow::eventFilter(watched, event);
 }
 

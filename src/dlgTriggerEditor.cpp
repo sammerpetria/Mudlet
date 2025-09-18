@@ -54,24 +54,15 @@
 #include <QFileDialog>
 #include <QFont>
 #include <QLabel>
-<<<<<<< HEAD
-=======
 #include <QMargins>
->>>>>>> triggereditor
 #include <QMessageBox>
 #include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
-<<<<<<< HEAD
-#include <QToolBar>
-#include <QVBoxLayout>
-#include <QTextCursor>
-=======
 #include <QTextCursor>
 #include <QToolBar>
 #include <QVBoxLayout>
->>>>>>> triggereditor
 
 #include "post_guard.h"
 
@@ -1021,12 +1012,6 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     mPatternNavigationHint = new QLabel(mpWidget_triggerItems);
     mPatternNavigationHint->setObjectName(qsl("patternNavigationHintLabel"));
     mPatternNavigationHint->setWordWrap(true);
-<<<<<<< HEAD
-    QFont hintFont = mPatternNavigationHint->font();
-    hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
-    mPatternNavigationHint->setFont(hintFont);
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
-=======
     mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
     mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     QFont hintFont = mPatternNavigationHint->font();
@@ -1035,7 +1020,6 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
     mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
     mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
->>>>>>> triggereditor
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
 
@@ -1177,10 +1161,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
-<<<<<<< HEAD
-=======
     pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
->>>>>>> triggereditor
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 
@@ -1218,26 +1199,12 @@ void dlgTriggerEditor::showPatternItems(int count)
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
     updatePatternTabOrder();
-<<<<<<< HEAD
-=======
     updatePatternNavigationHint();
->>>>>>> triggereditor
 }
 
 void dlgTriggerEditor::updatePatternPlaceholders()
 {
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-<<<<<<< HEAD
-        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
-    }
-
-    for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
-        if (edit->toPlainText().isEmpty()) {
-            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-            break;
-        }
-=======
         auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
         if (!patternItem) {
             continue;
@@ -1273,7 +1240,6 @@ QString dlgTriggerEditor::patternPlaceholderText(const int patternType) const
         return tr("Lua code to run (return true to match)");
     default:
         return QString();
->>>>>>> triggereditor
     }
 }
 
@@ -1335,10 +1301,6 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-<<<<<<< HEAD
-    //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
-=======
     int leftMargin = 0;
     if (mpWidget_triggerItems) {
         const QPoint hintPos = mPatternNavigationHint->mapTo(mpWidget_triggerItems, QPoint());
@@ -1370,7 +1332,6 @@ void dlgTriggerEditor::updatePatternNavigationHint()
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
     mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
->>>>>>> triggereditor
 
 }
 
@@ -6492,11 +6453,8 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
 
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
-<<<<<<< HEAD
-=======
     updatePatternPlaceholders();
     updatePatternNavigationHint();
->>>>>>> triggereditor
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
@@ -6504,25 +6462,18 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
     checkForMoreThanOneTriggerItem();
 
     bool hasContent = hasContentHint;
-<<<<<<< HEAD
-=======
     bool forceLineSpacerActive = false;
->>>>>>> triggereditor
     if (patternItem) {
         const int type = patternItem->comboBox_patternType->currentIndex();
         if (type == REGEX_PROMPT) {
             hasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
-<<<<<<< HEAD
-            hasContent = patternItem->spinBox_lineSpacer->value() > 0;
-=======
             forceLineSpacerActive = hasContentHint;
             if (!forceLineSpacerActive) {
                 hasContent = patternItem->spinBox_lineSpacer->value() > 0;
             } else {
                 hasContent = true;
             }
->>>>>>> triggereditor
         }
 
         if (patternItem->mRow == mVisiblePatternCount - 1 && hasContent && mVisiblePatternCount < 50) {
@@ -6539,12 +6490,9 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
             itemHasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
             itemHasContent = item->spinBox_lineSpacer->value() > 0;
-<<<<<<< HEAD
-=======
             if (forceLineSpacerActive && item == patternItem) {
                 itemHasContent = true;
             }
->>>>>>> triggereditor
         }
 
         if (itemHasContent) {
@@ -6673,12 +6621,9 @@ void dlgTriggerEditor::updatePatternTabOrder()
         previous = next;
     };
 
-<<<<<<< HEAD
-=======
     addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
     addToChain(mpTriggersMainArea->lineEdit_trigger_command);
 
->>>>>>> triggereditor
     for (int i = 0; i < mVisiblePatternCount && i < mTriggerPatternEdit.size(); ++i) {
         auto* item = mTriggerPatternEdit.value(i, nullptr);
         if (!item || !item->isVisible()) {
@@ -6701,13 +6646,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
             addToChain(item->comboBox_patternType);
         }
     }
-<<<<<<< HEAD
-
-    addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
-    addToChain(mpTriggersMainArea->lineEdit_trigger_command);
-    addToChain(mpSourceEditorEdbee);
-=======
->>>>>>> triggereditor
     addToChain(mpTriggersMainArea->spinBox_stayOpen);
     addToChain(mpTriggersMainArea->groupBox_soundTrigger);
     addToChain(mpTriggersMainArea->pushButtonSound);
@@ -6718,11 +6656,8 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
-<<<<<<< HEAD
-=======
     addToChain(mPatternNavigationHint);
     addToChain(mpSourceEditorEdbee);
->>>>>>> triggereditor
 
 }
 
@@ -10950,13 +10885,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-<<<<<<< HEAD
-        if (keyEvent->modifiers() == Qt::NoModifier) {
-=======
         const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
         const Qt::KeyboardModifiers additionalModifiers = modifiers & (Qt::ShiftModifier | Qt::AltModifier | Qt::MetaModifier | Qt::GroupSwitchModifier | Qt::KeypadModifier);
         if (modifiers.testFlag(Qt::ControlModifier) && additionalModifiers == Qt::NoModifier) {
->>>>>>> triggereditor
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
                 auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
                 if (keyEvent->key() == Qt::Key_Down) {

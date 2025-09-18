@@ -54,13 +54,15 @@
 #include <QFileDialog>
 #include <QFont>
 #include <QLabel>
+#include <QMargins>
 #include <QMessageBox>
+#include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
+#include <QTextCursor>
 #include <QToolBar>
 #include <QVBoxLayout>
-#include <QTextCursor>
 
 #include "post_guard.h"
 
@@ -1155,6 +1157,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
+    pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 
@@ -1192,20 +1195,47 @@ void dlgTriggerEditor::showPatternItems(int count)
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
     updatePatternTabOrder();
+    updatePatternNavigationHint();
 }
 
 void dlgTriggerEditor::updatePatternPlaceholders()
 {
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
-    }
-
-    for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
-        if (edit->toPlainText().isEmpty()) {
-            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-            break;
+        auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+        if (!patternItem) {
+            continue;
         }
+
+        auto* edit = patternItem->singleLineTextEdit_pattern;
+        if (!edit) {
+            continue;
+        }
+
+        if (!edit->isVisible() || !edit->toPlainText().isEmpty()) {
+            edit->setPlaceholderText(QString());
+            continue;
+        }
+
+        const QString placeholder = patternPlaceholderText(patternItem->comboBox_patternType->currentIndex());
+        edit->setPlaceholderText(placeholder);
+    }
+}
+
+QString dlgTriggerEditor::patternPlaceholderText(const int patternType) const
+{
+    switch (patternType) {
+    case REGEX_SUBSTRING:
+        return tr("Text to find (anywhere in the game output)");
+    case REGEX_PERL:
+        return tr("Text to find (as a regular expression pattern)");
+    case REGEX_BEGIN_OF_LINE_SUBSTRING:
+        return tr("Text to find (from beginning of the line)");
+    case REGEX_EXACT_MATCH:
+        return tr("Exact line to match");
+    case REGEX_LUA_CODE:
+        return tr("Lua code to run (return true to match)");
+    default:
+        return QString();
     }
 }
 
@@ -1267,8 +1297,37 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
+    int leftMargin = 0;
+    if (mpWidget_triggerItems) {
+        const QPoint hintPos = mPatternNavigationHint->mapTo(mpWidget_triggerItems, QPoint());
+        const int itemCount = qMin(mVisiblePatternCount, mTriggerPatternEdit.size());
+        for (int i = 0; i < itemCount; ++i) {
+            auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+            if (!patternItem || !patternItem->isVisible()) {
+                continue;
+            }
+
+            auto* edit = patternItem->singleLineTextEdit_pattern;
+            if (!edit || !edit->isVisible()) {
+                continue;
+            }
+
+            const QPoint editPos = edit->mapTo(mpWidget_triggerItems, QPoint());
+            leftMargin = qMax(0, editPos.x() - hintPos.x());
+            break;
+        }
+    }
+
+    const int topMargin = qMax(0, mPatternNavigationHint->fontMetrics().lineSpacing());
+    const QMargins currentMargins = mPatternNavigationHint->contentsMargins();
+    if (currentMargins.left() != leftMargin || currentMargins.top() != topMargin) {
+        mPatternNavigationHint->setContentsMargins(leftMargin, topMargin, 0, 0);
+    }
+
+    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
 
 }
 
@@ -6389,6 +6448,8 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
 
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
+    updatePatternPlaceholders();
+    updatePatternNavigationHint();
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
@@ -10805,7 +10866,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->modifiers() == Qt::NoModifier) {
+        const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
+        const Qt::KeyboardModifiers additionalModifiers = modifiers & (Qt::ShiftModifier | Qt::AltModifier | Qt::MetaModifier | Qt::GroupSwitchModifier | Qt::KeypadModifier);
+        if (modifiers.testFlag(Qt::ControlModifier) && additionalModifiers == Qt::NoModifier) {
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
                 auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
                 if (keyEvent->key() == Qt::Key_Down) {

@@ -1013,7 +1013,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
+    mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
+    mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
 
@@ -1295,7 +1297,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     }
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
 
 }
 
@@ -10833,7 +10835,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->modifiers() == Qt::NoModifier) {
+        const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
+        const Qt::KeyboardModifiers additionalModifiers = modifiers & (Qt::ShiftModifier | Qt::AltModifier | Qt::MetaModifier | Qt::GroupSwitchModifier | Qt::KeypadModifier);
+        if (modifiers.testFlag(Qt::ControlModifier) && additionalModifiers == Qt::NoModifier) {
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
                 auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
                 if (keyEvent->key() == Qt::Key_Down) {

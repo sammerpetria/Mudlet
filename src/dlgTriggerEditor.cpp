@@ -49,22 +49,43 @@
 #include "edbee/models/textdocumentscopes.h"
 
 #include "pre_guard.h"
+#include <QAccessible>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QFileDialog>
+#include <QFocusEvent>
 #include <QFont>
 #include <QLabel>
+#include <QMargins>
 #include <QMessageBox>
+#include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
+#include <QTextCursor>
 #include <QToolBar>
 #include <QVBoxLayout>
-#include <QTextCursor>
 
 #include "post_guard.h"
 
 using namespace std::chrono_literals;
+
+namespace {
+
+class FocusableHintLabel : public QLabel
+{
+public:
+    using QLabel::QLabel;
+
+protected:
+    void focusInEvent(QFocusEvent* event) override
+    {
+        QLabel::focusInEvent(event);
+        QAccessible::updateAccessibility(this, 0, QAccessible::Focus);
+    }
+};
+
+} // namespace
 
 // Used as a QObject::property so that we can keep track of the color for the
 // trigger colorizer buttons loaded from a trigger even if the user disables
@@ -1007,9 +1028,12 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
 
     lay1->addStretch();
 
-    mPatternNavigationHint = new QLabel(mpWidget_triggerItems);
+    mPatternNavigationHint = new FocusableHintLabel(mpWidget_triggerItems);
     mPatternNavigationHint->setObjectName(qsl("patternNavigationHintLabel"));
     mPatternNavigationHint->setWordWrap(true);
+    mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
+    mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
+    mPatternNavigationHint->setAccessibleName(tr("Pattern navigation hint"));
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
@@ -1155,6 +1179,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
+    pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 
@@ -1192,20 +1217,47 @@ void dlgTriggerEditor::showPatternItems(int count)
     mVisiblePatternCount = count;
     updatePatternPlaceholders();
     updatePatternTabOrder();
+    updatePatternNavigationHint();
 }
 
 void dlgTriggerEditor::updatePatternPlaceholders()
 {
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
-    }
-
-    for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
-        if (edit->toPlainText().isEmpty()) {
-            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-            break;
+        auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+        if (!patternItem) {
+            continue;
         }
+
+        auto* edit = patternItem->singleLineTextEdit_pattern;
+        if (!edit) {
+            continue;
+        }
+
+        if (!edit->isVisible() || !edit->toPlainText().isEmpty()) {
+            edit->setPlaceholderText(QString());
+            continue;
+        }
+
+        const QString placeholder = patternPlaceholderText(patternItem->comboBox_patternType->currentIndex());
+        edit->setPlaceholderText(placeholder);
+    }
+}
+
+QString dlgTriggerEditor::patternPlaceholderText(const int patternType) const
+{
+    switch (patternType) {
+    case REGEX_SUBSTRING:
+        return tr("Text to find (anywhere in the game output)");
+    case REGEX_PERL:
+        return tr("Text to find (as a regular expression pattern)");
+    case REGEX_BEGIN_OF_LINE_SUBSTRING:
+        return tr("Text to find (from beginning of the line)");
+    case REGEX_EXACT_MATCH:
+        return tr("Exact line to match");
+    case REGEX_LUA_CODE:
+        return tr("Lua code to run (return true to match)");
+    default:
+        return QString();
     }
 }
 
@@ -1267,8 +1319,46 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
+    int leftMargin = 0;
+    if (mpWidget_triggerItems) {
+        const QPoint hintPos = mPatternNavigationHint->mapTo(mpWidget_triggerItems, QPoint());
+        const int itemCount = qMin(mVisiblePatternCount, mTriggerPatternEdit.size());
+        for (int i = 0; i < itemCount; ++i) {
+            auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+            if (!patternItem || !patternItem->isVisible()) {
+                continue;
+            }
+
+            auto* edit = patternItem->singleLineTextEdit_pattern;
+            if (!edit || !edit->isVisible()) {
+                continue;
+            }
+
+            const QPoint editPos = edit->mapTo(mpWidget_triggerItems, QPoint());
+            leftMargin = qMax(0, editPos.x() - hintPos.x());
+            break;
+        }
+    }
+
+    const int topMargin = qMax(0, mPatternNavigationHint->fontMetrics().lineSpacing());
+    const QMargins currentMargins = mPatternNavigationHint->contentsMargins();
+    if (currentMargins.left() != leftMargin || currentMargins.top() != topMargin) {
+        mPatternNavigationHint->setContentsMargins(leftMargin, topMargin, 0, 0);
+    }
+
+    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+    const QString hintText = tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor.");
+    const bool textChanged = mPatternNavigationHint->text() != hintText;
+    if (textChanged) {
+        mPatternNavigationHint->setText(hintText);
+    }
+
+    mPatternNavigationHint->setAccessibleDescription(hintText);
+    if (textChanged) {
+        QAccessible::updateAccessibility(mPatternNavigationHint, 0, QAccessible::DescriptionChanged);
+    }
 
 }
 
@@ -6389,6 +6479,8 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
 
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
+    updatePatternPlaceholders();
+    updatePatternNavigationHint();
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
@@ -6396,12 +6488,18 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
     checkForMoreThanOneTriggerItem();
 
     bool hasContent = hasContentHint;
+    bool forceLineSpacerActive = false;
     if (patternItem) {
         const int type = patternItem->comboBox_patternType->currentIndex();
         if (type == REGEX_PROMPT) {
             hasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
-            hasContent = patternItem->spinBox_lineSpacer->value() > 0;
+            forceLineSpacerActive = hasContentHint;
+            if (!forceLineSpacerActive) {
+                hasContent = patternItem->spinBox_lineSpacer->value() > 0;
+            } else {
+                hasContent = true;
+            }
         }
 
         if (patternItem->mRow == mVisiblePatternCount - 1 && hasContent && mVisiblePatternCount < 50) {
@@ -6418,6 +6516,9 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
             itemHasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
             itemHasContent = item->spinBox_lineSpacer->value() > 0;
+            if (forceLineSpacerActive && item == patternItem) {
+                itemHasContent = true;
+            }
         }
 
         if (itemHasContent) {
@@ -6529,22 +6630,47 @@ void dlgTriggerEditor::updatePatternTabOrder()
         return;
     }
 
-    QWidget* previous = mpTriggersMainArea->lineEdit_trigger_name;
-    auto addToChain = [&previous, this](QWidget* next) {
-        if (!next || !previous) {
-            if (next) {
-                previous = next;
-            }
-            return;
+    auto isFocusable = [this](QWidget* widget) {
+        if (!widget) {
+            return false;
         }
 
-        if (!next->isVisibleTo(mpTriggersMainArea)) {
-            return;
+        if (widget->focusPolicy() == Qt::NoFocus) {
+            return false;
         }
 
-        QWidget::setTabOrder(previous, next);
-        previous = next;
+        if (!widget->isEnabled()) {
+            return false;
+        }
+
+        return widget->isVisibleTo(mpTriggersMainArea);
     };
+
+    QWidget* previousFocusable = nullptr;
+    if (isFocusable(mpTriggersMainArea->lineEdit_trigger_name)) {
+        previousFocusable = mpTriggersMainArea->lineEdit_trigger_name;
+    }
+
+    auto addToChain = [&](QWidget* next) {
+        if (!isFocusable(next)) {
+            return;
+        }
+
+        if (!previousFocusable) {
+            previousFocusable = next;
+            return;
+        }
+
+        if (previousFocusable == next) {
+            return;
+        }
+
+        QWidget::setTabOrder(previousFocusable, next);
+        previousFocusable = next;
+    };
+
+    addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
+    addToChain(mpTriggersMainArea->lineEdit_trigger_command);
 
     for (int i = 0; i < mVisiblePatternCount && i < mTriggerPatternEdit.size(); ++i) {
         auto* item = mTriggerPatternEdit.value(i, nullptr);
@@ -6568,10 +6694,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
             addToChain(item->comboBox_patternType);
         }
     }
-
-    addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
-    addToChain(mpTriggersMainArea->lineEdit_trigger_command);
-    addToChain(mpSourceEditorEdbee);
     addToChain(mpTriggersMainArea->spinBox_stayOpen);
     addToChain(mpTriggersMainArea->groupBox_soundTrigger);
     addToChain(mpTriggersMainArea->pushButtonSound);
@@ -6582,6 +6704,8 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
+    addToChain(mPatternNavigationHint);
+    addToChain(mpSourceEditorEdbee);
 
 }
 
@@ -6700,6 +6824,10 @@ void dlgTriggerEditor::slot_setupPatternControls(int type)
             pPatternItem->singleLineTextEdit_pattern->clear();
         }
     }
+
+    const bool hasText = !pPatternItem->singleLineTextEdit_pattern->toPlainText().isEmpty();
+    const bool treatAsContent = hasText || type == REGEX_PROMPT || type == REGEX_LINE_SPACER;
+    handlePatternChange(pPatternItem, treatAsContent);
 }
 
 void dlgTriggerEditor::slot_triggerSelected(QTreeWidgetItem* pItem)
@@ -10805,7 +10933,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->modifiers() == Qt::NoModifier) {
+        const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
+        const Qt::KeyboardModifiers additionalModifiers = modifiers & (Qt::ShiftModifier | Qt::AltModifier | Qt::MetaModifier | Qt::GroupSwitchModifier | Qt::KeypadModifier);
+        if (modifiers.testFlag(Qt::ControlModifier) && additionalModifiers == Qt::NoModifier) {
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
                 auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
                 if (keyEvent->key() == Qt::Key_Down) {

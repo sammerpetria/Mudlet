@@ -55,6 +55,7 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QSpinBox>
 #include <QToolBar>
 #include <QVBoxLayout>
 #include "post_guard.h"
@@ -1109,6 +1110,8 @@ void dlgTriggerEditor::createPatternItem(int index)
     connect(pItem->pushButton_bgColor, &QAbstractButton::clicked, this, &dlgTriggerEditor::slot_colorTriggerBg);
     connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_changedPattern);
     connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_itemEdited);
+    connect(pItem->spinBox_lineSpacer, qOverload<int>(&QSpinBox::valueChanged), this, &dlgTriggerEditor::slot_lineSpacerChanged);
+    connect(pItem->spinBox_lineSpacer, qOverload<int>(&QSpinBox::valueChanged), this, &dlgTriggerEditor::slot_itemEdited);
 
     auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
     pLayout->insertWidget(pLayout->count() - 1, pItem);
@@ -6296,33 +6299,36 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
     checkForMoreThanOneTriggerItem();
 }
 
-void dlgTriggerEditor::slot_changedPattern()
+void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
 {
-    SingleLineTextEdit* textEdit = qobject_cast<SingleLineTextEdit*>(sender());
-
-    if (lineEditShouldMarkSpaces[textEdit]) {
-        markQTextEdit(textEdit);
-        textEdit->blockSignals(true);
-        textEdit->rehighlight();
-        textEdit->blockSignals(false);
-    }
-
     checkForMoreThanOneTriggerItem();
 
-    if (textEdit) {
-        auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(textEdit->parentWidget());
-        if (patternItem && patternItem->mRow == mVisiblePatternCount - 1 && !textEdit->toPlainText().isEmpty() && mVisiblePatternCount < 50) {
+    bool hasContent = hasContentHint;
+    if (patternItem) {
+        const int type = patternItem->comboBox_patternType->currentIndex();
+        if (type == REGEX_PROMPT) {
+            hasContent = true;
+        } else if (type == REGEX_LINE_SPACER) {
+            hasContent = patternItem->spinBox_lineSpacer->value() > 0;
+        }
+
+        if (patternItem->mRow == mVisiblePatternCount - 1 && hasContent && mVisiblePatternCount < 50) {
             showPatternItems(mVisiblePatternCount + 1);
         }
     }
 
-    // Remove trailing blank pattern widgets and keep only one empty pattern
     int lastActive = -1;
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* pItem = mTriggerPatternEdit[i];
-        const bool hasText = !pItem->singleLineTextEdit_pattern->toPlainText().isEmpty();
-        const int type = pItem->comboBox_patternType->currentIndex();
-        if (hasText || type == REGEX_PROMPT || type == REGEX_LINE_SPACER) {
+        auto* item = mTriggerPatternEdit[i];
+        bool itemHasContent = !item->singleLineTextEdit_pattern->toPlainText().isEmpty();
+        const int type = item->comboBox_patternType->currentIndex();
+        if (type == REGEX_PROMPT) {
+            itemHasContent = true;
+        } else if (type == REGEX_LINE_SPACER) {
+            itemHasContent = item->spinBox_lineSpacer->value() > 0;
+        }
+
+        if (itemHasContent) {
             lastActive = i;
         }
     }
@@ -6333,6 +6339,37 @@ void dlgTriggerEditor::slot_changedPattern()
     } else {
         updatePatternPlaceholders();
     }
+}
+
+void dlgTriggerEditor::slot_changedPattern()
+{
+    SingleLineTextEdit* textEdit = qobject_cast<SingleLineTextEdit*>(sender());
+
+    if (textEdit && lineEditShouldMarkSpaces[textEdit]) {
+        markQTextEdit(textEdit);
+        textEdit->blockSignals(true);
+        textEdit->rehighlight();
+        textEdit->blockSignals(false);
+    }
+
+    auto* patternItem = textEdit ? qobject_cast<dlgTriggerPatternEdit*>(textEdit->parentWidget()) : nullptr;
+    const bool hasText = textEdit && !textEdit->toPlainText().isEmpty();
+    handlePatternChange(patternItem, hasText);
+}
+
+void dlgTriggerEditor::slot_lineSpacerChanged(int value)
+{
+    auto* spinBox = qobject_cast<QSpinBox*>(sender());
+    if (!spinBox) {
+        return;
+    }
+
+    auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(spinBox->parentWidget());
+    if (!patternItem) {
+        return;
+    }
+
+    handlePatternChange(patternItem, value > 0);
 }
 
 // This can get called after the lineEdit contents has changed and it is now a

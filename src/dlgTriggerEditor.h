@@ -309,6 +309,7 @@ private slots:
     void slot_toggleSearchIncludeVariables(bool);
     void slot_toggleGroupBoxColorizeTrigger(const bool);
     void slot_changedPattern();
+    void slot_lineSpacerChanged(int value);
     void slot_clearSearchResults();
     void slot_clearSoundFile();
     void slot_editorContextMenu();
@@ -463,6 +464,7 @@ private:
     void createPatternItem(int index);
     void showPatternItems(int count);
     void updatePatternPlaceholders();
+    void handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint);
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);

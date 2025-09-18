@@ -1015,7 +1015,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
+    mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
+    mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
 
@@ -6450,6 +6452,7 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
     updatePatternTabOrder();
     updatePatternPlaceholders();
     updatePatternNavigationHint();
+
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)

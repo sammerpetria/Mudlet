@@ -1221,6 +1221,13 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
         mLastPatternShortcut = nullptr;
     }
 
+    for (auto* shortcut : mPatternNavigationShortcuts) {
+        if (shortcut) {
+            shortcut->deleteLater();
+        }
+    }
+    mPatternNavigationShortcuts.clear();
+
     if (!mpTriggersMainArea) {
         return;
     }
@@ -1233,6 +1240,7 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
         }
         focusPatternItem(0, Qt::ShortcutFocusReason);
     });
+
 
     mLastPatternShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), mpTriggersMainArea);
     mLastPatternShortcut->setContext(Qt::WidgetWithChildrenShortcut);
@@ -1247,6 +1255,7 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
     if (mFirstPatternShortcut) {
         mFirstPatternShortcut->setEnabled(enableShortcuts);
     }
+
     if (mLastPatternShortcut) {
         mLastPatternShortcut->setEnabled(enableShortcuts);
     }
@@ -1259,7 +1268,8 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     }
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB para alternar con el Editor de Lua Code."));
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+
 }
 
 
@@ -8630,6 +8640,11 @@ void dlgTriggerEditor::changeView(EditorViewType view)
 
     if (mFirstPatternShortcut) {
         mFirstPatternShortcut->setEnabled(enablePatternShortcuts);
+    }
+    for (auto* shortcut : mPatternNavigationShortcuts) {
+        if (shortcut) {
+            shortcut->setEnabled(enablePatternShortcuts);
+        }
     }
     if (mLastPatternShortcut) {
         mLastPatternShortcut->setEnabled(enablePatternShortcuts);

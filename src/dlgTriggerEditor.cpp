@@ -1012,6 +1012,8 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     mPatternNavigationHint = new QLabel(mpWidget_triggerItems);
     mPatternNavigationHint->setObjectName(qsl("patternNavigationHintLabel"));
     mPatternNavigationHint->setWordWrap(true);
+    mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
+    mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
@@ -6452,7 +6454,6 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
     updatePatternTabOrder();
     updatePatternPlaceholders();
     updatePatternNavigationHint();
-
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
@@ -6610,6 +6611,9 @@ void dlgTriggerEditor::updatePatternTabOrder()
         previous = next;
     };
 
+    addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
+    addToChain(mpTriggersMainArea->lineEdit_trigger_command);
+
     for (int i = 0; i < mVisiblePatternCount && i < mTriggerPatternEdit.size(); ++i) {
         auto* item = mTriggerPatternEdit.value(i, nullptr);
         if (!item || !item->isVisible()) {
@@ -6632,10 +6636,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
             addToChain(item->comboBox_patternType);
         }
     }
-
-    addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
-    addToChain(mpTriggersMainArea->lineEdit_trigger_command);
-    addToChain(mpSourceEditorEdbee);
     addToChain(mpTriggersMainArea->spinBox_stayOpen);
     addToChain(mpTriggersMainArea->groupBox_soundTrigger);
     addToChain(mpTriggersMainArea->pushButtonSound);
@@ -6646,6 +6646,8 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
+    addToChain(mPatternNavigationHint);
+    addToChain(mpSourceEditorEdbee);
 
 }
 

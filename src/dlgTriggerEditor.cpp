@@ -1034,10 +1034,13 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
     mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
     mPatternNavigationHint->setAccessibleName(tr("Pattern navigation hint"));
+
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
+    mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
+    mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
 
@@ -1349,7 +1352,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    const QString hintText = tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor.");
+    const QString hintText = tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to last pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Ctrl+TAB for toggle with Lua Code Editor.");
     const bool textChanged = mPatternNavigationHint->text() != hintText;
     if (textChanged) {
         mPatternNavigationHint->setText(hintText);
@@ -1359,7 +1362,6 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     if (textChanged) {
         QAccessible::updateAccessibility(mPatternNavigationHint, 0, QAccessible::DescriptionChanged);
     }
-
 }
 
 

@@ -1013,7 +1013,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
+    mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
+    mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
 
@@ -1155,6 +1157,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
     pItem->singleLineTextEdit_pattern->setFont(font);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
+    pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 
@@ -1197,15 +1200,41 @@ void dlgTriggerEditor::showPatternItems(int count)
 void dlgTriggerEditor::updatePatternPlaceholders()
 {
     for (int i = 0; i < mVisiblePatternCount; ++i) {
-        mTriggerPatternEdit[i]->singleLineTextEdit_pattern->setPlaceholderText(QString());
-    }
-
-    for (int i = 0; i < mVisiblePatternCount; ++i) {
-        auto* edit = mTriggerPatternEdit[i]->singleLineTextEdit_pattern;
-        if (edit->toPlainText().isEmpty()) {
-            edit->setPlaceholderText(tr("Text to find (anywhere in the game output)"));
-            break;
+        auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+        if (!patternItem) {
+            continue;
         }
+
+        auto* edit = patternItem->singleLineTextEdit_pattern;
+        if (!edit) {
+            continue;
+        }
+
+        if (!edit->isVisible() || !edit->toPlainText().isEmpty()) {
+            edit->setPlaceholderText(QString());
+            continue;
+        }
+
+        const QString placeholder = patternPlaceholderText(patternItem->comboBox_patternType->currentIndex());
+        edit->setPlaceholderText(placeholder);
+    }
+}
+
+QString dlgTriggerEditor::patternPlaceholderText(const int patternType) const
+{
+    switch (patternType) {
+    case REGEX_SUBSTRING:
+        return tr("Text to find (anywhere in the game output)");
+    case REGEX_PERL:
+        return tr("Text to find (as a regular expression pattern)");
+    case REGEX_BEGIN_OF_LINE_SUBSTRING:
+        return tr("Text to find (from beginning of the line)");
+    case REGEX_EXACT_MATCH:
+        return tr("Exact line to match");
+    case REGEX_LUA_CODE:
+        return tr("Lua code to run (return true to match)");
+    default:
+        return QString();
     }
 }
 
@@ -1268,7 +1297,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     }
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
 
 }
 
@@ -6389,6 +6418,7 @@ void dlgTriggerEditor::setupPatternControls(const int type, dlgTriggerPatternEdi
 
     checkForMoreThanOneTriggerItem();
     updatePatternTabOrder();
+    updatePatternPlaceholders();
 }
 
 void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint)
@@ -10805,7 +10835,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
 
     if (event->type() == QEvent::KeyPress) {
         auto* keyEvent = static_cast<QKeyEvent*>(event);
-        if (keyEvent->modifiers() == Qt::NoModifier) {
+        const Qt::KeyboardModifiers modifiers = keyEvent->modifiers();
+        const Qt::KeyboardModifiers additionalModifiers = modifiers & (Qt::ShiftModifier | Qt::AltModifier | Qt::MetaModifier | Qt::GroupSwitchModifier | Qt::KeypadModifier);
+        if (modifiers.testFlag(Qt::ControlModifier) && additionalModifiers == Qt::NoModifier) {
             if (auto* edit = qobject_cast<SingleLineTextEdit*>(watched)) {
                 auto* patternItem = qobject_cast<dlgTriggerPatternEdit*>(edit->parentWidget());
                 if (keyEvent->key() == Qt::Key_Down) {

@@ -49,11 +49,9 @@
 #include "edbee/models/textdocumentscopes.h"
 
 #include "pre_guard.h"
-#include <QAccessible>
 #include <QCheckBox>
 #include <QColorDialog>
 #include <QFileDialog>
-#include <QFocusEvent>
 #include <QFont>
 #include <QLabel>
 #include <QMargins>
@@ -69,23 +67,6 @@
 #include "post_guard.h"
 
 using namespace std::chrono_literals;
-
-namespace {
-
-class FocusableHintLabel : public QLabel
-{
-public:
-    using QLabel::QLabel;
-
-protected:
-    void focusInEvent(QFocusEvent* event) override
-    {
-        QLabel::focusInEvent(event);
-        QAccessible::updateAccessibility(this, 0, QAccessible::Focus);
-    }
-};
-
-} // namespace
 
 // Used as a QObject::property so that we can keep track of the color for the
 // trigger colorizer buttons loaded from a trigger even if the user disables
@@ -1028,13 +1009,11 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
 
     lay1->addStretch();
 
-    mPatternNavigationHint = new FocusableHintLabel(mpWidget_triggerItems);
+    mPatternNavigationHint = new QLabel(mpWidget_triggerItems);
     mPatternNavigationHint->setObjectName(qsl("patternNavigationHintLabel"));
     mPatternNavigationHint->setWordWrap(true);
     mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
     mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
-    mPatternNavigationHint->setAccessibleName(tr("Pattern navigation hint"));
-
     QFont hintFont = mPatternNavigationHint->font();
     hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
     mPatternNavigationHint->setFont(hintFont);
@@ -1352,16 +1331,8 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    const QString hintText = tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to last pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Ctrl+TAB for toggle with Lua Code Editor.");
-    const bool textChanged = mPatternNavigationHint->text() != hintText;
-    if (textChanged) {
-        mPatternNavigationHint->setText(hintText);
-    }
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
 
-    mPatternNavigationHint->setAccessibleDescription(hintText);
-    if (textChanged) {
-        QAccessible::updateAccessibility(mPatternNavigationHint, 0, QAccessible::DescriptionChanged);
-    }
 }
 
 
@@ -6632,43 +6603,21 @@ void dlgTriggerEditor::updatePatternTabOrder()
         return;
     }
 
-    auto isFocusable = [this](QWidget* widget) {
-        if (!widget) {
-            return false;
-        }
-
-        if (widget->focusPolicy() == Qt::NoFocus) {
-            return false;
-        }
-
-        if (!widget->isEnabled()) {
-            return false;
-        }
-
-        return widget->isVisibleTo(mpTriggersMainArea);
-    };
-
-    QWidget* previousFocusable = nullptr;
-    if (isFocusable(mpTriggersMainArea->lineEdit_trigger_name)) {
-        previousFocusable = mpTriggersMainArea->lineEdit_trigger_name;
-    }
-
-    auto addToChain = [&](QWidget* next) {
-        if (!isFocusable(next)) {
+    QWidget* previous = mpTriggersMainArea->lineEdit_trigger_name;
+    auto addToChain = [&previous, this](QWidget* next) {
+        if (!next || !previous) {
+            if (next) {
+                previous = next;
+            }
             return;
         }
 
-        if (!previousFocusable) {
-            previousFocusable = next;
+        if (!next->isVisibleTo(mpTriggersMainArea)) {
             return;
         }
 
-        if (previousFocusable == next) {
-            return;
-        }
-
-        QWidget::setTabOrder(previousFocusable, next);
-        previousFocusable = next;
+        QWidget::setTabOrder(previous, next);
+        previous = next;
     };
 
     addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);

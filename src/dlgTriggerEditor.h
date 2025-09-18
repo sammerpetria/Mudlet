@@ -467,6 +467,7 @@ private:
     void showPatternItems(int count);
     void updatePatternPlaceholders();
     void handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint);
+
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);
@@ -485,6 +486,7 @@ private:
     QWidget* firstFocusablePatternWidget(const dlgTriggerPatternEdit* patternItem) const;
     bool focusNextPatternItem(const dlgTriggerPatternEdit* currentItem);
     bool focusPreviousPatternItem(const dlgTriggerPatternEdit* currentItem);
+
     bool focusPatternItem(const int row, const Qt::FocusReason reason = Qt::TabFocusReason);
     void setupPatternNavigationShortcuts();
     void updatePatternNavigationHint();
@@ -563,6 +565,7 @@ private:
     int mVisiblePatternCount = 0;
     QStringList mPatternList;
     QVector<QIcon> mPatternIcons;
+    
     QShortcut* mFirstPatternShortcut = nullptr;
     QShortcut* mLastPatternShortcut = nullptr;
     bool mChangingVar = false;

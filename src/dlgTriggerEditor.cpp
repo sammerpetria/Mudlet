@@ -61,6 +61,7 @@
 #include <QToolBar>
 #include <QVBoxLayout>
 #include <QTextCursor>
+
 #include "post_guard.h"
 
 using namespace std::chrono_literals;
@@ -1066,6 +1067,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
                      icon_color_trigger,
                      icon_prompt};
 
+
     showPatternItems(2);
     setupPatternNavigationShortcuts();
     updatePatternTabOrder();
@@ -1207,6 +1209,7 @@ void dlgTriggerEditor::updatePatternPlaceholders()
     }
 }
 
+
 void dlgTriggerEditor::setupPatternNavigationShortcuts()
 {
     for (auto* shortcut : mPatternNavigationShortcuts) {
@@ -1269,6 +1272,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     //: Hint shown below trigger patterns explaining navigation shortcuts.
     mPatternNavigationHint->setText(tr("Press Enter to move to the next pattern. Use Ctrl+1-9 (Ctrl+0 for pattern 10) to focus a specific pattern and Ctrl+L to jump to the last visible pattern."));
 }
+
 
 void dlgTriggerEditor::slot_addPattern()
 {
@@ -10789,9 +10793,9 @@ bool dlgTriggerEditor::eventFilter(QObject* watched, QEvent* event)
                     return true;
                 }
             }
+
         }
     }
-
     return QMainWindow::eventFilter(watched, event);
 }
 

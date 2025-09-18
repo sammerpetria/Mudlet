@@ -467,6 +467,7 @@ private:
     void showPatternItems(int count);
     void updatePatternPlaceholders();
     void handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint);
+
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);
     void setShortcuts(QList<QAction*> actionList, const bool active = true);

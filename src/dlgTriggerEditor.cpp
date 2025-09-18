@@ -1215,6 +1215,7 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
         mFirstPatternShortcut->deleteLater();
         mFirstPatternShortcut = nullptr;
     }
+
     if (mLastPatternShortcut) {
         mLastPatternShortcut->deleteLater();
         mLastPatternShortcut = nullptr;
@@ -1258,70 +1259,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     }
 
     //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields."));
-}
-
-void dlgTriggerEditor::setupPatternNavigationShortcuts()
-{
-    for (auto* shortcut : mPatternNavigationShortcuts) {
-        if (shortcut) {
-            shortcut->deleteLater();
-        }
-    }
-    mPatternNavigationShortcuts.clear();
-    if (mLastPatternShortcut) {
-        mLastPatternShortcut->deleteLater();
-        mLastPatternShortcut = nullptr;
-    }
-
-    if (!mpTriggersMainArea) {
-        return;
-    }
-
-    const auto createShortcut = [this](const QKeySequence& sequence, const int targetRow) {
-        auto* shortcut = new QShortcut(sequence, mpTriggersMainArea);
-        shortcut->setContext(Qt::WidgetWithChildrenShortcut);
-        connect(shortcut, &QShortcut::activated, this, [this, targetRow]() {
-            focusPatternItem(targetRow, Qt::ShortcutFocusReason);
-        });
-        mPatternNavigationShortcuts.append(shortcut);
-    };
-
-    for (int digit = 0; digit < 9; ++digit) {
-        const auto key = static_cast<Qt::Key>(Qt::Key_1 + digit);
-        createShortcut(QKeySequence(Qt::CTRL | key), digit);
-    }
-
-    createShortcut(QKeySequence(Qt::CTRL | Qt::Key_0), 9);
-
-    mLastPatternShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_L), mpTriggersMainArea);
-    mLastPatternShortcut->setContext(Qt::WidgetWithChildrenShortcut);
-    connect(mLastPatternShortcut, &QShortcut::activated, this, [this]() {
-        if (mVisiblePatternCount < 1) {
-            return;
-        }
-        focusPatternItem(mVisiblePatternCount - 1, Qt::ShortcutFocusReason);
-    });
-
-    const bool enableShortcuts = mCurrentView == EditorViewType::cmTriggerView;
-    for (auto* shortcut : mPatternNavigationShortcuts) {
-        if (shortcut) {
-            shortcut->setEnabled(enableShortcuts);
-        }
-    }
-    if (mLastPatternShortcut) {
-        mLastPatternShortcut->setEnabled(enableShortcuts);
-    }
-}
-
-void dlgTriggerEditor::updatePatternNavigationHint()
-{
-    if (!mPatternNavigationHint) {
-        return;
-    }
-
-    //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Press Enter to move to the next pattern. Use Ctrl+1-9 (Ctrl+0 for pattern 10) to focus a specific pattern and Ctrl+L to jump to the last visible pattern."));
+    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and the arrow keys to move between pattern fields. Control+TAB para alternar con el Editor de Lua Code."));
 }
 
 
@@ -6623,6 +6561,7 @@ void dlgTriggerEditor::updatePatternTabOrder()
 
     addToChain(mpTriggersMainArea->toolButton_toggleExtraControls);
     addToChain(mpTriggersMainArea->lineEdit_trigger_command);
+    addToChain(mpSourceEditorEdbee);
     addToChain(mpTriggersMainArea->spinBox_stayOpen);
     addToChain(mpTriggersMainArea->groupBox_soundTrigger);
     addToChain(mpTriggersMainArea->pushButtonSound);
@@ -6633,7 +6572,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
-    addToChain(mpSourceEditorEdbee);
 
 }
 

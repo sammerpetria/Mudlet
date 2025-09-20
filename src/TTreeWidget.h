@@ -24,6 +24,8 @@
 
 
 #include "pre_guard.h"
+#include <QEvent>
+#include <QKeyEvent>
 #include <QPointer>
 #include <QTreeWidget>
 #include "post_guard.h"
@@ -61,7 +63,12 @@ public:
     void beginInsertRows(const QModelIndex& parent, int first, int last);
     void getAllChildren(QTreeWidgetItem*, QList<QTreeWidgetItem*>&);
 
+protected:
+    bool event(QEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+
 private:
+
     bool mIsDropAction;
     QPointer<Host> mpHost;
     int mOldParentID;

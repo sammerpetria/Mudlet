@@ -28,6 +28,7 @@
 #include <QTreeWidget>
 #include "post_guard.h"
 
+class QKeyEvent;
 class Host;
 
 
@@ -60,6 +61,9 @@ public:
     void setIsKeyTree();
     void beginInsertRows(const QModelIndex& parent, int first, int last);
     void getAllChildren(QTreeWidgetItem*, QList<QTreeWidgetItem*>&);
+
+protected:
+    void keyPressEvent(QKeyEvent* event) override;
 
 private:
     bool mIsDropAction;

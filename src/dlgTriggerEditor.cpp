@@ -621,6 +621,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
                               "so changes will be lost in case of a computer/program crash (but Save Profile to the right will be secure.)</p>"));
     connect(mSaveItem, &QAction::triggered, this, &dlgTriggerEditor::slot_saveEdits);
 
+
     QList<QAction*> cutActions;
     auto addCutAction = [&](QTreeWidget* tree) {
         if (!tree) {
@@ -643,6 +644,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     addCutAction(treeWidget_scripts);
     addCutAction(treeWidget_actions);
     addCutAction(treeWidget_keys);
+
 
     QAction* copyAction = new QAction(tr("Copy"), this);
     copyAction->setShortcut(QKeySequence(QKeySequence::Copy));

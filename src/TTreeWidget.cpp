@@ -30,6 +30,7 @@
 #include "pre_guard.h"
 #include <QtEvents>
 #include <QHeaderView>
+#include <QKeySequence>
 #include "post_guard.h"
 
 TTreeWidget::TTreeWidget(QWidget* pW)
@@ -173,6 +174,16 @@ void TTreeWidget::mouseReleaseEvent(QMouseEvent* event)
         }
     }
     QTreeWidget::mouseReleaseEvent(event);
+}
+
+void TTreeWidget::keyPressEvent(QKeyEvent* event)
+{
+    if (event->matches(QKeySequence::Copy) || event->matches(QKeySequence::Paste) || event->matches(QKeySequence::Cut)) {
+        event->accept();
+        return;
+    }
+
+    QTreeWidget::keyPressEvent(event);
 }
 
 void TTreeWidget::mousePressEvent(QMouseEvent* event)

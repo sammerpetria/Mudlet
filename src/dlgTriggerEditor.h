@@ -282,6 +282,7 @@ public slots:
     void slot_sourceFindTextChanges();
     void slot_sourceReplace();
     void slot_saveEdits();
+    void slot_cutXml();
     void slot_copyXml();
     void slot_pasteXml();
 // Not used:    void slot_choseActionIcon();
@@ -394,6 +395,8 @@ private:
     void exportMultipleActionsToClipboard(const QList<TAction*>& actions);
     void exportMultipleScriptsToClipboard(const QList<TScript*>& scripts);
     void exportMultipleKeysToClipboard(const QList<TKey*>& keys);
+    bool handleCutPaste();
+    void clearCutBuffer();
 
     void clearDocument(edbee::TextEditorWidget* pEditorWidget, const QString& initialText = QString());
 
@@ -558,6 +561,8 @@ private:
     QAction* mDeleteItem = nullptr;
     QAction* mAddGroup = nullptr;
     QAction* mSaveItem = nullptr;
+    QList<int> mCutItemIDs;
+    EditorViewType mCutItemsView = EditorViewType::cmUnknownView;
 
     SearchOptions mSearchOptions = SearchOptionNone;
     QSplitter* searchSplitter;

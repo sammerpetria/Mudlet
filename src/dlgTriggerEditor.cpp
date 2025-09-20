@@ -55,6 +55,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QScrollBar>
+#include <QSet>
 #include <QShortcut>
 #include <QShowEvent>
 #include <QToolBar>
@@ -620,6 +621,29 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
                               "so changes will be lost in case of a computer/program crash (but Save Profile to the right will be secure.)</p>"));
     connect(mSaveItem, &QAction::triggered, this, &dlgTriggerEditor::slot_saveEdits);
 
+    QList<QAction*> cutActions;
+    auto addCutAction = [&](QTreeWidget* tree) {
+        if (!tree) {
+            return;
+        }
+        QAction* action = new QAction(tr("Cut"), tree);
+        action->setShortcut(QKeySequence(QKeySequence::Cut));
+        // only take effect if the treeview is selected, otherwise it hijacks the shortcut from edbee
+        action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+        action->setToolTip(tr("Cut the trigger/script/alias/etc"));
+        action->setStatusTip(tr("Cut the trigger/script/alias/etc"));
+        tree->addAction(action);
+        connect(action, &QAction::triggered, this, &dlgTriggerEditor::slot_cutXml);
+        cutActions.append(action);
+    };
+
+    addCutAction(treeWidget_triggers);
+    addCutAction(treeWidget_aliases);
+    addCutAction(treeWidget_timers);
+    addCutAction(treeWidget_scripts);
+    addCutAction(treeWidget_actions);
+    addCutAction(treeWidget_keys);
+
     QAction* copyAction = new QAction(tr("Copy"), this);
     copyAction->setShortcut(QKeySequence(QKeySequence::Copy));
     // only take effect if the treeview is selected, otherwise it hijacks the shortcut from edbee
@@ -676,6 +700,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     }
 
     if (!qApp->testAttribute(Qt::AA_DontShowIconsInMenus)) {
+        for (QAction* action : cutActions) {
+            action->setIcon(QIcon::fromTheme(qsl("edit-cut"), QIcon(qsl(":/icons/edit-cut.png"))));
+        }
         copyAction->setIcon(QIcon::fromTheme(qsl("edit-copy"), QIcon(qsl(":/icons/edit-copy.png"))));
         pasteAction->setIcon(QIcon::fromTheme(qsl("edit-paste"), QIcon(qsl(":/icons/edit-paste.png"))));
     }
@@ -9892,8 +9919,126 @@ void dlgTriggerEditor::slot_createModule()
     packageExporter->show();
 }
 
+void dlgTriggerEditor::clearCutBuffer()
+{
+    mCutItemIDs.clear();
+    mCutItemsView = EditorViewType::cmUnknownView;
+}
+
+void dlgTriggerEditor::slot_cutXml()
+{
+    clearCutBuffer();
+
+    QList<int> selectedIds;
+    QSet<int> uniqueIds;
+
+    switch (mCurrentView) {
+    case EditorViewType::cmTriggerView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_triggers->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int triggerID = item->data(0, Qt::UserRole).toInt();
+            if ((triggerID == 0) || uniqueIds.contains(triggerID)) {
+                continue;
+            }
+            if (auto trigger = mpHost->getTriggerUnit()->getTrigger(triggerID)) {
+                uniqueIds.insert(triggerID);
+                selectedIds << triggerID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmTimerView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_timers->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int timerID = item->data(0, Qt::UserRole).toInt();
+            if ((timerID == 0) || uniqueIds.contains(timerID)) {
+                continue;
+            }
+            if (auto timer = mpHost->getTimerUnit()->getTimer(timerID)) {
+                uniqueIds.insert(timerID);
+                selectedIds << timerID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmAliasView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_aliases->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int aliasID = item->data(0, Qt::UserRole).toInt();
+            if ((aliasID == 0) || uniqueIds.contains(aliasID)) {
+                continue;
+            }
+            if (auto alias = mpHost->getAliasUnit()->getAlias(aliasID)) {
+                uniqueIds.insert(aliasID);
+                selectedIds << aliasID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmScriptView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_scripts->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int scriptID = item->data(0, Qt::UserRole).toInt();
+            if ((scriptID == 0) || uniqueIds.contains(scriptID)) {
+                continue;
+            }
+            if (auto script = mpHost->getScriptUnit()->getScript(scriptID)) {
+                uniqueIds.insert(scriptID);
+                selectedIds << scriptID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmActionView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_actions->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int actionID = item->data(0, Qt::UserRole).toInt();
+            if ((actionID == 0) || uniqueIds.contains(actionID)) {
+                continue;
+            }
+            if (auto action = mpHost->getActionUnit()->getAction(actionID)) {
+                uniqueIds.insert(actionID);
+                selectedIds << actionID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmKeysView: {
+        QList<QTreeWidgetItem*> selectedItems = treeWidget_keys->selectedItems();
+        for (QTreeWidgetItem* item : selectedItems) {
+            const int keyID = item->data(0, Qt::UserRole).toInt();
+            if ((keyID == 0) || uniqueIds.contains(keyID)) {
+                continue;
+            }
+            if (auto key = mpHost->getKeyUnit()->getKey(keyID)) {
+                uniqueIds.insert(keyID);
+                selectedIds << keyID;
+            }
+        }
+        break;
+    }
+    case EditorViewType::cmVarsView:
+        qWarning().nospace().noquote() << "dlgTriggerEditor::slot_cutXml() WARNING - switch(EditorViewType) not expected to be called for \"EditorViewType::cmVarsView!\"";
+        break;
+    case EditorViewType::cmUnknownView:
+        qWarning().nospace().noquote() << "dlgTriggerEditor::slot_cutXml() WARNING - switch(EditorViewType) not expected to be called for \"EditorViewType::cmUnknownView!\"";
+        break;
+    }
+
+    if (selectedIds.isEmpty()) {
+        slot_copyXml();
+        return;
+    }
+
+    slot_copyXml();
+    mCutItemIDs = selectedIds;
+    mCutItemsView = mCurrentView;
+}
+
 void dlgTriggerEditor::slot_copyXml()
 {
+    clearCutBuffer();
+
     switch (mCurrentView) {
     case EditorViewType::cmTriggerView:
         exportTriggerToClipboard();
@@ -9922,11 +10067,569 @@ void dlgTriggerEditor::slot_copyXml()
     }
 }
 
+bool dlgTriggerEditor::handleCutPaste()
+{
+    if ((mCutItemsView != mCurrentView) || mCutItemIDs.isEmpty()) {
+        return false;
+    }
+
+    const QList<int> cutIds = mCutItemIDs;
+    QSet<int> cutIdSet;
+    for (int id : cutIds) {
+        cutIdSet.insert(id);
+    }
+
+    auto targetIndexForTree = [](QTreeWidget* tree) -> QModelIndex {
+        if (!tree) {
+            return QModelIndex();
+        }
+        QModelIndex index = tree->currentIndex();
+        if (index.isValid()) {
+            return index;
+        }
+        const QList<QTreeWidgetItem*> selectedItems = tree->selectedItems();
+        if (!selectedItems.isEmpty()) {
+            return tree->indexFromItem(selectedItems.first());
+        }
+        return QModelIndex();
+    };
+
+    auto indexInsideCutDescendant = [&](QTreeWidget* tree, const QModelIndex& index) -> bool {
+        if (!tree || !index.isValid()) {
+            return false;
+        }
+        QTreeWidgetItem* item = tree->itemFromIndex(index);
+        if (!item) {
+            return false;
+        }
+        item = item->parent();
+        while (item) {
+            const int ancestorId = item->data(0, Qt::UserRole).toInt();
+            if (cutIdSet.contains(ancestorId)) {
+                return true;
+            }
+            item = item->parent();
+        }
+        return false;
+    };
+
+    auto hasAncestorInCut = [&](auto* object) -> bool {
+        if (!object) {
+            return true;
+        }
+        auto parent = object->getParent();
+        while (parent) {
+            if (cutIdSet.contains(parent->getID())) {
+                return true;
+            }
+            parent = parent->getParent();
+        }
+        return false;
+    };
+
+    switch (mCurrentView) {
+    case EditorViewType::cmTriggerView: {
+        QTreeWidget* tree = treeWidget_triggers;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto triggerUnit = mpHost->getTriggerUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TTrigger* trigger = triggerUnit->getTrigger(id);
+                if (!trigger || hasAncestorInCut(trigger)) {
+                    continue;
+                }
+                triggerUnit->reParentTrigger(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TTrigger* targetTrigger = triggerUnit->getTrigger(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetTrigger && targetTrigger->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TTrigger* trigger = triggerUnit->getTrigger(id);
+                    if (!trigger || hasAncestorInCut(trigger)) {
+                        continue;
+                    }
+                    triggerUnit->reParentTrigger(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TTrigger* trigger = triggerUnit->getTrigger(id);
+                    if (!trigger || hasAncestorInCut(trigger)) {
+                        continue;
+                    }
+                    triggerUnit->reParentTrigger(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectTriggerByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmTimerView: {
+        QTreeWidget* tree = treeWidget_timers;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto timerUnit = mpHost->getTimerUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TTimer* timer = timerUnit->getTimer(id);
+                if (!timer || hasAncestorInCut(timer)) {
+                    continue;
+                }
+                timerUnit->reParentTimer(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TTimer* targetTimer = timerUnit->getTimer(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetTimer && targetTimer->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TTimer* timer = timerUnit->getTimer(id);
+                    if (!timer || hasAncestorInCut(timer)) {
+                        continue;
+                    }
+                    timerUnit->reParentTimer(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TTimer* timer = timerUnit->getTimer(id);
+                    if (!timer || hasAncestorInCut(timer)) {
+                        continue;
+                    }
+                    timerUnit->reParentTimer(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectTimerByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmAliasView: {
+        QTreeWidget* tree = treeWidget_aliases;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto aliasUnit = mpHost->getAliasUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TAlias* alias = aliasUnit->getAlias(id);
+                if (!alias || hasAncestorInCut(alias)) {
+                    continue;
+                }
+                aliasUnit->reParentAlias(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TAlias* targetAlias = aliasUnit->getAlias(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetAlias && targetAlias->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TAlias* alias = aliasUnit->getAlias(id);
+                    if (!alias || hasAncestorInCut(alias)) {
+                        continue;
+                    }
+                    aliasUnit->reParentAlias(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TAlias* alias = aliasUnit->getAlias(id);
+                    if (!alias || hasAncestorInCut(alias)) {
+                        continue;
+                    }
+                    aliasUnit->reParentAlias(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectAliasByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmScriptView: {
+        QTreeWidget* tree = treeWidget_scripts;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto scriptUnit = mpHost->getScriptUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TScript* script = scriptUnit->getScript(id);
+                if (!script || hasAncestorInCut(script)) {
+                    continue;
+                }
+                scriptUnit->reParentScript(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TScript* targetScript = scriptUnit->getScript(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetScript && targetScript->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TScript* script = scriptUnit->getScript(id);
+                    if (!script || hasAncestorInCut(script)) {
+                        continue;
+                    }
+                    scriptUnit->reParentScript(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TScript* script = scriptUnit->getScript(id);
+                    if (!script || hasAncestorInCut(script)) {
+                        continue;
+                    }
+                    scriptUnit->reParentScript(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectScriptByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmActionView: {
+        QTreeWidget* tree = treeWidget_actions;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto actionUnit = mpHost->getActionUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TAction* action = actionUnit->getAction(id);
+                if (!action || hasAncestorInCut(action)) {
+                    continue;
+                }
+                actionUnit->reParentAction(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TAction* targetAction = actionUnit->getAction(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetAction && targetAction->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TAction* action = actionUnit->getAction(id);
+                    if (!action || hasAncestorInCut(action)) {
+                        continue;
+                    }
+                    actionUnit->reParentAction(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TAction* action = actionUnit->getAction(id);
+                    if (!action || hasAncestorInCut(action)) {
+                        continue;
+                    }
+                    actionUnit->reParentAction(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectActionByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmKeysView: {
+        QTreeWidget* tree = treeWidget_keys;
+        QModelIndex targetIndex = targetIndexForTree(tree);
+
+        if (indexInsideCutDescendant(tree, targetIndex)) {
+            statusBar()->showMessage(tr("Cannot move items into themselves."), 3000);
+            return true;
+        }
+
+        if (targetIndex.isValid()) {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            if (cutIdSet.contains(targetId)) {
+                targetIndex = targetIndex.parent();
+            }
+        }
+
+        auto keyUnit = mpHost->getKeyUnit();
+        QList<int> processedIds;
+
+        if (!targetIndex.isValid()) {
+            for (int id : cutIds) {
+                TKey* key = keyUnit->getKey(id);
+                if (!key || hasAncestorInCut(key)) {
+                    continue;
+                }
+                keyUnit->reParentKey(id, 0, 0, -1, -1);
+                processedIds << id;
+            }
+        } else {
+            const int targetId = targetIndex.data(Qt::UserRole).toInt();
+            QTreeWidgetItem* targetItem = tree->itemFromIndex(targetIndex);
+            TKey* targetKey = keyUnit->getKey(targetId);
+            const bool pasteIntoGroup = (targetItem && (targetItem->childCount() > 0)) || (targetKey && targetKey->isFolder());
+
+            if (pasteIntoGroup) {
+                for (int id : cutIds) {
+                    TKey* key = keyUnit->getKey(id);
+                    if (!key || hasAncestorInCut(key)) {
+                        continue;
+                    }
+                    keyUnit->reParentKey(id, 0, targetId, -1, -1);
+                    processedIds << id;
+                }
+            } else {
+                const QModelIndex parentIndex = targetIndex.parent();
+                const int parentId = parentIndex.data(Qt::UserRole).toInt();
+                const int parentRow = parentIndex.row();
+                int siblingRow = targetIndex.row() + 1;
+                for (int id : cutIds) {
+                    TKey* key = keyUnit->getKey(id);
+                    if (!key || hasAncestorInCut(key)) {
+                        continue;
+                    }
+                    keyUnit->reParentKey(id, 0, parentId, parentRow, siblingRow);
+                    processedIds << id;
+                    ++siblingRow;
+                }
+            }
+        }
+
+        if (processedIds.isEmpty()) {
+            statusBar()->showMessage(tr("Nothing to move."), 3000);
+            clearCutBuffer();
+            return true;
+        }
+
+        mNeedUpdateData = true;
+
+        const int firstId = processedIds.first();
+        const bool animated = tree->isAnimated();
+        tree->setAnimated(false);
+        selectKeyByID(firstId);
+        tree->setAnimated(animated);
+        tree->setFocus();
+
+        const int displayTime = (processedIds.size() > 1) ? 3000 : 2000;
+        statusBar()->showMessage(tr("Moved %n item(s)", "", processedIds.size()), displayTime);
+
+        clearCutBuffer();
+        return true;
+    }
+    case EditorViewType::cmVarsView:
+        qWarning().nospace().noquote() << "dlgTriggerEditor::handleCutPaste() WARNING - switch(EditorViewType) not expected to be called for \"EditorViewType::cmVarsView!\"";
+        clearCutBuffer();
+        return true;
+    case EditorViewType::cmUnknownView:
+        qWarning().nospace().noquote() << "dlgTriggerEditor::handleCutPaste() WARNING - switch(EditorViewType) not expected to be called for \"EditorViewType::cmUnknownView!\"";
+        clearCutBuffer();
+        return true;
+    }
+
+    return false;
+}
+
 // FIXME: The switch cases in here need to handle EditorViewType::cmVarsView but how is not clear
 void dlgTriggerEditor::slot_pasteXml()
 {
-    XMLimport reader(mpHost);
-
     switch (mCurrentView) {
     case EditorViewType::cmTriggerView:
         saveTrigger();
@@ -9953,6 +10656,18 @@ void dlgTriggerEditor::slot_pasteXml()
         qWarning().nospace().noquote() << "dlgTriggerEditor::slot_pasteXml() WARNING - switch(EditorViewType) number 1 not expected to be called for \"EditorViewType::cmUnknownView!\"";
         break;
     }
+
+    if (!mCutItemIDs.isEmpty()) {
+        if (mCutItemsView == mCurrentView) {
+            if (handleCutPaste()) {
+                return;
+            }
+        } else {
+            clearCutBuffer();
+        }
+    }
+
+    XMLimport reader(mpHost);
 
     // Check if clipboard contains multiple items (separated by our delimiter)
     QString clipboardText = QApplication::clipboard()->text();

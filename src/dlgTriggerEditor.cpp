@@ -51,6 +51,7 @@
 
 #include "pre_guard.h"
 #include <QCheckBox>
+#include <QClipboard>
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -326,6 +327,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
 
     mpAliasMainArea = new dlgAliasMainArea(this);
     layoutColumn->addWidget(mpAliasMainArea, 1);
+    mpAliasMainArea->lineEdit_alias_pattern->installEventFilter(this);
 
     mpActionsMainArea = new dlgActionMainArea(this);
     layoutColumn->addWidget(mpActionsMainArea, 1);
@@ -440,6 +442,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     edbee::Edbee::instance()->autoCompleteProviderList()->setParentProvider(provider);
 
     mpSourceEditorEdbee->textEditorComponent()->setContextMenuPolicy(Qt::CustomContextMenu);
+    mpSourceEditorEdbee->textEditorComponent()->installEventFilter(this);
     connect(mpSourceEditorEdbee->textEditorComponent(), &QWidget::customContextMenuRequested, this, &dlgTriggerEditor::slot_editorContextMenu);
 
     // option areas
@@ -1061,6 +1064,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
         connect(pItem->pushButton_bgColor, &QAbstractButton::clicked, this, &dlgTriggerEditor::slot_colorTriggerBg);
         connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_changedPattern);
         connect(pItem->singleLineTextEdit_pattern, &QPlainTextEdit::textChanged, this, &dlgTriggerEditor::slot_itemEdited);
+        pItem->singleLineTextEdit_pattern->installEventFilter(this);
 
         mpWidget_triggerItems->layout()->addWidget(pItem);
 
@@ -10432,9 +10436,32 @@ void dlgTriggerEditor::slot_profileSaveAsAction()
 bool dlgTriggerEditor::eventFilter(QObject*, QEvent* event)
 {
     if (event->type() == QEvent::KeyPress) {
-        auto *keyEvent = static_cast<QKeyEvent *>(event);
-        switch (keyEvent->key())
-        {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
+
+        if (!mIsGrabKey && keyEvent->matches(QKeySequence::Paste)) {
+            if (const QClipboard* clipboard = QApplication::clipboard(); clipboard) {
+                const QString clipboardText = clipboard->text();
+                const QString trimmedClipboardText = clipboardText.trimmed();
+
+                const bool looksLikePackage = trimmedClipboardText.startsWith(qsl("<MudletPackage"))
+                    || (trimmedClipboardText.startsWith(qsl("<?xml")) && trimmedClipboardText.contains(qsl("<MudletPackage")));
+
+                if (looksLikePackage) {
+                    if (auto* bar = statusBar()) {
+                        bar->showMessage(tr("Detected Mudlet package data on the clipboard. Importing instead of pasting."), 3000);
+                    }
+                    slot_pasteXml();
+                    keyEvent->accept();
+                    return true;
+                }
+            }
+        }
+
+        if (!mIsGrabKey) {
+            return false;
+        }
+
+        switch (keyEvent->key()) {
         case Qt::Key_Up:
         case Qt::Key_Down:
         case Qt::Key_Left:

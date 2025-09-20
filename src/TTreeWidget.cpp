@@ -28,8 +28,10 @@
 #include "VarUnit.h"
 
 #include "pre_guard.h"
-#include <QtEvents>
 #include <QHeaderView>
+#include <QKeyEvent>
+#include <QKeySequence>
+#include <QtEvents>
 #include "post_guard.h"
 
 TTreeWidget::TTreeWidget(QWidget* pW)
@@ -54,6 +56,19 @@ TTreeWidget::TTreeWidget(QWidget* pW)
     mIsActionTree = false;
     mIsKeyTree = false;
     mIsVarTree = false;
+}
+
+bool TTreeWidget::event(QEvent* event)
+{
+    if (event->type() == QEvent::ShortcutOverride) {
+        auto* keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->matches(QKeySequence::Copy) || keyEvent->matches(QKeySequence::Cut) || keyEvent->matches(QKeySequence::Paste)) {
+            event->ignore();
+            return false;
+        }
+    }
+
+    return QTreeWidget::event(event);
 }
 
 void TTreeWidget::setIsAliasTree()
@@ -138,6 +153,16 @@ void TTreeWidget::getAllChildren(QTreeWidgetItem* pItem, QList<QTreeWidgetItem*>
     for (int i = 0; i < pItem->childCount(); ++i) {
         getAllChildren(pItem->child(i), list);
     }
+}
+
+void TTreeWidget::keyPressEvent(QKeyEvent* event)
+{
+    if (event->matches(QKeySequence::Copy) || event->matches(QKeySequence::Cut) || event->matches(QKeySequence::Paste)) {
+        event->ignore();
+        return;
+    }
+
+    QTreeWidget::keyPressEvent(event);
 }
 
 void TTreeWidget::mouseReleaseEvent(QMouseEvent* event)

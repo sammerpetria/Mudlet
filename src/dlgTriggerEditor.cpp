@@ -621,19 +621,30 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
                               "so changes will be lost in case of a computer/program crash (but Save Profile to the right will be secure.)</p>"));
     connect(mSaveItem, &QAction::triggered, this, &dlgTriggerEditor::slot_saveEdits);
 
-    QAction* cutAction = new QAction(tr("Cut"), this);
-    cutAction->setShortcut(QKeySequence(QKeySequence::Cut));
-    // only take effect if the treeview is selected, otherwise it hijacks the shortcut from edbee
-    cutAction->setShortcutContext(Qt::WidgetWithChildrenShortcut);
-    cutAction->setToolTip(tr("Cut the trigger/script/alias/etc"));
-    cutAction->setStatusTip(tr("Cut the trigger/script/alias/etc"));
-    treeWidget_triggers->addAction(cutAction);
-    treeWidget_aliases->addAction(cutAction);
-    treeWidget_timers->addAction(cutAction);
-    treeWidget_scripts->addAction(cutAction);
-    treeWidget_actions->addAction(cutAction);
-    treeWidget_keys->addAction(cutAction);
-    connect(cutAction, &QAction::triggered, this, &dlgTriggerEditor::slot_cutXml);
+
+    QList<QAction*> cutActions;
+    auto addCutAction = [&](QTreeWidget* tree) {
+        if (!tree) {
+            return;
+        }
+        QAction* action = new QAction(tr("Cut"), tree);
+        action->setShortcut(QKeySequence(QKeySequence::Cut));
+        // only take effect if the treeview is selected, otherwise it hijacks the shortcut from edbee
+        action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+        action->setToolTip(tr("Cut the trigger/script/alias/etc"));
+        action->setStatusTip(tr("Cut the trigger/script/alias/etc"));
+        tree->addAction(action);
+        connect(action, &QAction::triggered, this, &dlgTriggerEditor::slot_cutXml);
+        cutActions.append(action);
+    };
+
+    addCutAction(treeWidget_triggers);
+    addCutAction(treeWidget_aliases);
+    addCutAction(treeWidget_timers);
+    addCutAction(treeWidget_scripts);
+    addCutAction(treeWidget_actions);
+    addCutAction(treeWidget_keys);
+
 
     QAction* copyAction = new QAction(tr("Copy"), this);
     copyAction->setShortcut(QKeySequence(QKeySequence::Copy));
@@ -691,7 +702,9 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     }
 
     if (!qApp->testAttribute(Qt::AA_DontShowIconsInMenus)) {
-        cutAction->setIcon(QIcon::fromTheme(qsl("edit-cut"), QIcon(qsl(":/icons/edit-cut.png"))));
+        for (QAction* action : cutActions) {
+            action->setIcon(QIcon::fromTheme(qsl("edit-cut"), QIcon(qsl(":/icons/edit-cut.png"))));
+        }
         copyAction->setIcon(QIcon::fromTheme(qsl("edit-copy"), QIcon(qsl(":/icons/edit-copy.png"))));
         pasteAction->setIcon(QIcon::fromTheme(qsl("edit-paste"), QIcon(qsl(":/icons/edit-paste.png"))));
     }

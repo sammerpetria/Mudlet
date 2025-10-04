@@ -23,6 +23,7 @@
 #include "dlgTriggerPatternEdit.h"
 
 #include "pre_guard.h"
+#include <QPalette>
 #include "post_guard.h"
 
 dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
@@ -30,6 +31,12 @@ dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
 {
     // init generated dialog
     setupUi(this);
+
+    // Ensure the widget background follows the active editor theme instead of
+    // keeping the default bright palette in dark mode.
+    setAutoFillBackground(true);
+    setBackgroundRole(QPalette::Base);
+
     // delay the connection so the pattern type is available for the slot
     connect(comboBox_patternType, qOverload<int>(&QComboBox::currentIndexChanged), this, &dlgTriggerPatternEdit::slot_triggerTypeComboBoxChanged, Qt::QueuedConnection);
 }

@@ -1159,9 +1159,8 @@ void dlgTriggerEditor::createPatternItem(int index)
 
     lineEditShouldMarkSpaces[pItem->singleLineTextEdit_pattern] = false;
 
-    QFont font = mpHost->getDisplayFont();
-    font.setPixelSize(pItem->singleLineTextEdit_pattern->height() / 2);
-    pItem->singleLineTextEdit_pattern->setFont(font);
+    QFont patternFont = mpHost->getDisplayFont();
+    pItem->singleLineTextEdit_pattern->setFont(patternFont);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
     pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
     pItem->spinBox_lineSpacer->installEventFilter(this);

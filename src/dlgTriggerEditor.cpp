@@ -1607,6 +1607,13 @@ void dlgTriggerEditor::readSettings()
     mSearchSplitterState = settings.value("mSearchSplitterState", QByteArray()).toByteArray();
 
     mPatternNavigationHintHidden = settings.value(qsl("patternNavigationHintHidden"), false).toBool();
+
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey);
+    if (mPatternNavigationHintHidden && !permanentlyHidden) {
+        mPatternNavigationHintHidden = false;
+        settings.setValue(qsl("patternNavigationHintHidden"), false);
+        updatePatternNavigationHint();
+    }
 }
 
 void dlgTriggerEditor::writeSettings()

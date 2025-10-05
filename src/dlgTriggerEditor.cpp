@@ -62,6 +62,7 @@
 #include <QMargins>
 #include <QMessageBox>
 #include <QMetaEnum>
+#include <QPalette>
 #include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
@@ -1158,10 +1159,33 @@ void dlgTriggerEditor::slot_clickedMessageBox(const QString& URL)
 void dlgTriggerEditor::slot_editorThemeChanged()
 {
     for (int i = 0; i < mTriggerPatternEdit.size(); i++) {
-        auto* patternWidget = mTriggerPatternEdit.at(i);
-        patternWidget->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
-        patternWidget->applyThemePalette(patternWidget->singleLineTextEdit_pattern->palette());
+        applyPatternWidgetStyle(mTriggerPatternEdit.at(i));
     }
+}
+
+void dlgTriggerEditor::applyPatternWidgetStyle(dlgTriggerPatternEdit* patternWidget)
+{
+    if (!patternWidget || !mpHost) {
+        return;
+    }
+
+    QPalette referencePalette;
+    QFont referenceFont;
+    bool hasReference = false;
+
+    if (mpTriggersMainArea && mpTriggersMainArea->lineEdit_trigger_name) {
+        referencePalette = mpTriggersMainArea->lineEdit_trigger_name->palette();
+        referenceFont = mpTriggersMainArea->lineEdit_trigger_name->font();
+        hasReference = true;
+    }
+
+    patternWidget->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
+    if (!hasReference) {
+        referencePalette = patternWidget->singleLineTextEdit_pattern->palette();
+        referenceFont = mpHost->getDisplayFont();
+    }
+    patternWidget->applyThemePalette(referencePalette);
+    patternWidget->singleLineTextEdit_pattern->setFont(referenceFont);
 }
 
 void dlgTriggerEditor::createPatternItem(int index)
@@ -1202,11 +1226,8 @@ void dlgTriggerEditor::createPatternItem(int index)
 
     lineEditShouldMarkSpaces[pItem->singleLineTextEdit_pattern] = false;
 
-    QFont patternFont = mpHost->getDisplayFont();
-    pItem->singleLineTextEdit_pattern->setFont(patternFont);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
-    pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
-    pItem->applyThemePalette(pItem->singleLineTextEdit_pattern->palette());
+    applyPatternWidgetStyle(pItem);
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 

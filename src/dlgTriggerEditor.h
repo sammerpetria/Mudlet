@@ -477,6 +477,7 @@ private:
     void updatePatternPlaceholders();
     [[nodiscard]] QString patternPlaceholderText(int patternType) const;
     void handlePatternChange(dlgTriggerPatternEdit* patternItem, bool hasContentHint);
+    void applyPatternWidgetStyle(dlgTriggerPatternEdit* patternWidget);
 
     void keyGrabCallback(const Qt::Key, const Qt::KeyboardModifiers);
     void setShortcuts(const bool active = true);

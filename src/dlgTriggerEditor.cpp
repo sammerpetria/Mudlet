@@ -57,6 +57,7 @@
 #include <QLabel>
 #include <QMargins>
 #include <QMessageBox>
+#include <QMetaEnum>
 #include <QPoint>
 #include <QScrollBar>
 #include <QShortcut>
@@ -1011,20 +1012,6 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
 
     lay1->addStretch();
 
-    mPatternNavigationHint = new QLabel(mpWidget_triggerItems);
-    mPatternNavigationHint->setObjectName(qsl("patternNavigationHintLabel"));
-    mPatternNavigationHint->setWordWrap(true);
-    mPatternNavigationHint->setFocusPolicy(Qt::StrongFocus);
-    mPatternNavigationHint->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
-    QFont hintFont = mPatternNavigationHint->font();
-    hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
-    mPatternNavigationHint->setFont(hintFont);
-    const int navigationHintTopMargin = mPatternNavigationHint->fontMetrics().lineSpacing();
-    mPatternNavigationHint->setContentsMargins(0, navigationHintTopMargin, 0, 0);
-    mPatternNavigationHint->setAlignment(Qt::AlignHCenter | Qt::AlignTop);
-    updatePatternNavigationHint();
-    lay1->insertWidget(lay1->count() - 1, mPatternNavigationHint);
-
     QPixmap pixMap_subString(256, 256);
     pixMap_subString.fill(Qt::black);
     const QIcon icon_subString(pixMap_subString);
@@ -1141,13 +1128,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     connect(pItem->spinBox_lineSpacer, qOverload<int>(&QSpinBox::valueChanged), this, &dlgTriggerEditor::slot_itemEdited);
 
     auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
-    int insertIndex = pLayout->count() - 1;
-    if (mPatternNavigationHint) {
-        const int hintIndex = pLayout->indexOf(mPatternNavigationHint);
-        if (hintIndex >= 0) {
-            insertIndex = hintIndex;
-        }
-    }
+    const int insertIndex = qMax(0, pLayout->count() - 1);
     pLayout->insertWidget(insertIndex, pItem);
 
     mTriggerPatternEdit.push_back(pItem);
@@ -1312,42 +1293,50 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
 
 void dlgTriggerEditor::updatePatternNavigationHint()
 {
-    if (!mPatternNavigationHint) {
+    if (mCurrentView != EditorViewType::cmTriggerView) {
         return;
     }
 
-    int leftMargin = 0;
-    if (mpWidget_triggerItems) {
-        const QPoint hintPos = mPatternNavigationHint->mapTo(mpWidget_triggerItems, QPoint());
-        const int itemCount = qMin(mVisiblePatternCount, mTriggerPatternEdit.size());
-        for (int i = 0; i < itemCount; ++i) {
-            auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
-            if (!patternItem || !patternItem->isVisible()) {
-                continue;
-            }
-
-            auto* edit = patternItem->singleLineTextEdit_pattern;
-            if (!edit || !edit->isVisible()) {
-                continue;
-            }
-
-            const QPoint editPos = edit->mapTo(mpWidget_triggerItems, QPoint());
-            leftMargin = qMax(0, editPos.x() - hintPos.x());
-            break;
-        }
+    if (!mpTriggersMainArea || !mpTriggersMainArea->isVisible()) {
+        return;
     }
 
-    const int topMargin = qMax(0, mPatternNavigationHint->fontMetrics().lineSpacing());
-    const QMargins currentMargins = mPatternNavigationHint->contentsMargins();
-    if (currentMargins.left() != leftMargin || currentMargins.top() != topMargin) {
-        mPatternNavigationHint->setContentsMargins(leftMargin, topMargin, 0, 0);
+    static const auto bannerKey = qsl("pattern-navigation");
+    const QString settingsKey = bannerSettingsKey(EditorViewType::cmTriggerView, bannerKey);
+    const QString baseKey = bannerSettingsKey(EditorViewType::cmTriggerView, QString());
+    if (settingsKey.isEmpty()) {
+        return;
     }
 
-    mPatternNavigationHint->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    if (mTemporarilyHiddenBanners.contains(settingsKey) || mTemporarilyHiddenBanners.contains(baseKey)) {
+        return;
+    }
 
-    //: Hint shown below trigger patterns explaining navigation shortcuts.
-    mPatternNavigationHint->setText(tr("Use Ctrl+F to focus the first pattern, Ctrl+L to jump to the last visible pattern, and Ctrl+Up or Ctrl+Down to move between pattern fields. Control+TAB for toggle with Lua Code Editor."));
+    if (bannerPermanentlyHidden(EditorViewType::cmTriggerView, bannerKey)) {
+        return;
+    }
 
+    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey != bannerKey
+        && !mpSystemMessageArea->notificationAreaMessageBox->text().isEmpty()) {
+        return;
+    }
+
+    //: Hint shown below trigger patterns explaining navigation shortcuts. Uses HTML for a heading and bullet list.
+    const QString content = tr(
+        "<p><strong>Pattern navigation shortcuts</strong></p>"
+        "<ul>"
+        "<li><code>Ctrl+F</code> focuses the first pattern field.</li>"
+        "<li><code>Ctrl+L</code> jumps to the last visible pattern.</li>"
+        "<li><code>Ctrl+Up</code> / <code>Ctrl+Down</code> move between pattern fields.</li>"
+        "<li><code>Ctrl+Tab</code> toggles with the Lua code editor.</li>"
+        "</ul>");
+
+    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey == bannerKey
+        && mpSystemMessageArea->notificationAreaMessageBox->text() == content) {
+        return;
+    }
+
+    showHideableBanner(content, bannerKey);
 }
 
 
@@ -6107,9 +6096,10 @@ void dlgTriggerEditor::saveScript()
     pItem->setData(0, Qt::AccessibleDescriptionRole, itemDescription);
 }
 
-void dlgTriggerEditor::clearEditorNotification() const
+void dlgTriggerEditor::clearEditorNotification()
 {
     mpSystemMessageArea->hide();
+    mCurrentBannerKey.clear();
 }
 
 int dlgTriggerEditor::canRecast(QTreeWidgetItem* pItem, int newNameType, int newValueType)
@@ -6749,7 +6739,6 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
-    addToChain(mPatternNavigationHint);
     addToChain(mpSourceEditorEdbee);
 
 }
@@ -9117,6 +9106,7 @@ void dlgTriggerEditor::showError(const QString& text)
     mpSystemMessageArea->notificationAreaIconLabelWarning->hide();
     mpSystemMessageArea->notificationAreaMessageBox->setText(text);
     mpSystemMessageArea->show();
+    mCurrentBannerKey.clear();
     if (!mpHost->mIsProfileLoadingSequence) {
         mudlet::self()->announce(text);
     }
@@ -9129,6 +9119,7 @@ void dlgTriggerEditor::showWarning(const QString& text)
     mpSystemMessageArea->notificationAreaIconLabelWarning->show();
     mpSystemMessageArea->notificationAreaMessageBox->setText(text);
     mpSystemMessageArea->show();
+    mCurrentBannerKey.clear();
     if (!mpHost->mIsProfileLoadingSequence) {
         mudlet::self()->announce(text);
     }
@@ -9141,6 +9132,7 @@ void dlgTriggerEditor::showInfo(const QString& text)
     mpSystemMessageArea->notificationAreaIconLabelInformation->show();
     mpSystemMessageArea->notificationAreaMessageBox->setText(text);
     mpSystemMessageArea->show();
+    mCurrentBannerKey.clear();
     if (!mpHost->mIsProfileLoadingSequence) {
         mudlet::self()->announce(text);
     }
@@ -9153,7 +9145,8 @@ void dlgTriggerEditor::showIntro(const QString& desiredOption)
         return;
     }
 
-    if (bannerPermanentlyHidden(mCurrentView)) {
+    static const auto bannerKey = qsl("intro");
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
         return;
     }
 
@@ -9169,13 +9162,65 @@ void dlgTriggerEditor::showIntro(const QString& desiredOption)
     QString content = qsl("<p>%1</p><ul>%2</ul>")
         .arg(introAddCurrentItem.summary, introTextOptions);
 
-    mLastDismissedBannerContent = content;
-    mLastDismissedBannerView = mCurrentView;
+    showHideableBanner(content, bannerKey);
+}
+
+void dlgTriggerEditor::showHideableBanner(const QString& content, const QString& bannerKey)
+{
+    if (!mpSystemMessageArea) {
+        return;
+    }
+
+    const QString settingsKey = bannerSettingsKey(mCurrentView, bannerKey);
+    const QString baseKey = bannerSettingsKey(mCurrentView, QString());
+    if (settingsKey.isEmpty()) {
+        return;
+    }
+
+    if (mTemporarilyHiddenBanners.contains(settingsKey) || (!bannerKey.isEmpty() && mTemporarilyHiddenBanners.contains(baseKey))) {
+        return;
+    }
+
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
+        return;
+    }
+
+    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey != bannerKey
+        && !mpSystemMessageArea->notificationAreaMessageBox->text().isEmpty()) {
+        return;
+    }
+
+    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey == bannerKey
+        && mpSystemMessageArea->notificationAreaMessageBox->text() == content) {
+        return;
+    }
 
     disconnect(mpSystemMessageArea->messageAreaCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::hideSystemMessageArea);
+    disconnect(mpSystemMessageArea->messageAreaCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::slot_bannerDismissClicked);
     connect(mpSystemMessageArea->messageAreaCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::slot_bannerDismissClicked);
 
+    disconnect(mpSystemMessageArea->notificationAreaMessageBox, &QLabel::linkActivated, nullptr, nullptr);
+    connect(mpSystemMessageArea->notificationAreaMessageBox, &QLabel::linkActivated, this, &dlgTriggerEditor::slot_clickedMessageBox);
+
     showInfo(content);
+    mCurrentBannerKey = bannerKey;
+}
+
+QString dlgTriggerEditor::bannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const
+{
+    const QMetaEnum metaEnum = QMetaEnum::fromType<EditorViewType>();
+    const char* enumName = metaEnum.valueToKey(static_cast<int>(viewType));
+
+    if (!enumName) {
+        return QString();
+    }
+
+    QString key = QString::fromLatin1(enumName).toLower();
+    if (!bannerKey.isEmpty()) {
+        key += qsl("/%1").arg(bannerKey);
+    }
+
+    return key;
 }
 
 void dlgTriggerEditor::slot_showActions()
@@ -12033,7 +12078,17 @@ void dlgTriggerEditor::slot_bannerDismissClicked()
 
 void dlgTriggerEditor::handleBannerDismiss()
 {
+    mLastDismissedBannerView = mCurrentView;
+    mLastDismissedBannerContent = mpSystemMessageArea->notificationAreaMessageBox->text();
+    mLastDismissedBannerKey = mCurrentBannerKey;
+
+    const QString settingsKey = bannerSettingsKey(mCurrentView, mCurrentBannerKey);
+    if (!settingsKey.isEmpty()) {
+        mTemporarilyHiddenBanners.insert(settingsKey);
+    }
+
     hideSystemMessageArea();
+    mCurrentBannerKey.clear();
     showBannerUndoToast();
 }
 
@@ -12043,6 +12098,8 @@ void dlgTriggerEditor::showBannerUndoToast()
         mpBannerUndoTimer->stop();
         mpBannerUndoTimer->deleteLater();
     }
+
+    mCurrentBannerKey.clear();
 
     mpBannerUndoTimer = new QTimer(this);
     mpBannerUndoTimer->setSingleShot(true);
@@ -12080,48 +12137,55 @@ void dlgTriggerEditor::undoBannerDismiss()
         mpBannerUndoTimer = nullptr;
     }
 
-    if (mLastDismissedBannerView == mCurrentView && !mLastDismissedBannerContent.isEmpty()) {
-        mpSystemMessageArea->notificationAreaIconLabelError->hide();
-        mpSystemMessageArea->notificationAreaIconLabelWarning->hide();
-        mpSystemMessageArea->notificationAreaIconLabelInformation->show();
-        mpSystemMessageArea->notificationAreaMessageBox->setText(mLastDismissedBannerContent);
-        mpSystemMessageArea->show();
+    const QString settingsKey = bannerSettingsKey(mLastDismissedBannerView, mLastDismissedBannerKey);
+    if (!settingsKey.isEmpty()) {
+        mTemporarilyHiddenBanners.remove(settingsKey);
+    }
 
-        connect(mpSystemMessageArea->notificationAreaMessageBox, &QLabel::linkActivated, this, &dlgTriggerEditor::slot_clickedMessageBox);
+    setBannerPermanentlyHidden(mLastDismissedBannerView, mLastDismissedBannerKey, false);
+
+    if (mLastDismissedBannerView == mCurrentView && !mLastDismissedBannerContent.isEmpty()) {
+        showHideableBanner(mLastDismissedBannerContent, mLastDismissedBannerKey);
     }
 }
 
 
 void dlgTriggerEditor::handlePermanentBannerDismiss()
 {
-    setBannerPermanentlyHidden(mCurrentView, true);
+    setBannerPermanentlyHidden(mLastDismissedBannerView, mLastDismissedBannerKey, true);
     hideSystemMessageArea();
+    mCurrentBannerKey.clear();
 }
 
-bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType)
+bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey)
 {
-    const QMetaEnum metaEnum = QMetaEnum::fromType<EditorViewType>();
-    const char* enumName = metaEnum.valueToKey(static_cast<int>(viewType));
-
-    if (!enumName) {
+    const QString key = bannerSettingsKey(viewType, bannerKey);
+    const QString baseKey = bannerSettingsKey(viewType, QString());
+    if (key.isEmpty()) {
         return false;
     }
 
     QSettings* settings = mudlet::getQSettings();
-    const QString key = qsl("Editor/banner_permanently_hidden/%1").arg(QString::fromLatin1(enumName).toLower());
-    return settings->value(key, false).toBool();
+    if (!bannerKey.isEmpty() && !baseKey.isEmpty()) {
+        if (settings->value(qsl("Editor/banner_permanently_hidden/%1").arg(baseKey), false).toBool()) {
+            return true;
+        }
+    }
+
+    return settings->value(qsl("Editor/banner_permanently_hidden/%1").arg(key), false).toBool();
 }
 
-void dlgTriggerEditor::setBannerPermanentlyHidden(EditorViewType viewType, bool hidden)
+void dlgTriggerEditor::setBannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool hidden)
 {
-    const QMetaEnum metaEnum = QMetaEnum::fromType<EditorViewType>();
-    const char* enumName = metaEnum.valueToKey(static_cast<int>(viewType));
-
-    if (!enumName) {
+    const QString key = bannerSettingsKey(viewType, bannerKey);
+    if (key.isEmpty()) {
         return;
     }
 
     QSettings* settings = mudlet::getQSettings();
-    const QString key = qsl("Editor/banner_permanently_hidden/%1").arg(QString::fromLatin1(enumName).toLower());
-    settings->setValue(key, hidden);
+    settings->setValue(qsl("Editor/banner_permanently_hidden/%1").arg(key), hidden);
+
+    if (!hidden) {
+        mTemporarilyHiddenBanners.remove(key);
+    }
 }

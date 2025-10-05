@@ -555,6 +555,10 @@ private:
     QLabel* mPatternNavigationHintLabel = nullptr;
     QToolButton* mPatternNavigationHintCloseButton = nullptr;
     bool mPatternNavigationHintHidden = false;
+    void handlePatternNavigationHintDismiss();
+    void showPatternNavigationHintUndoToast();
+    void undoPatternNavigationHintDismiss();
+    void handlePatternNavigationHintPermanentDismiss();
     // this widget holds the errors, trigger patterns, and all other widgets that aren't edbee
     // in it, as a workaround for an extra splitter getting created by Qt below the error msg otherwise
     QWidget *mpNonCodeWidgets = nullptr;

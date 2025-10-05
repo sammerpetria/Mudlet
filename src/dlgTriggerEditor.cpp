@@ -77,6 +77,8 @@
 
 using namespace std::chrono_literals;
 
+static const auto patternNavigationBannerKey = qsl("pattern-navigation");
+
 // Used as a QObject::property so that we can keep track of the color for the
 // trigger colorizer buttons loaded from a trigger even if the user disables
 // and then reenables the colorizer function (and we "grey out" the color while
@@ -1055,15 +1057,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     patternNavigationHintLayout->addWidget(mPatternNavigationHintCloseButton);
     patternNavigationHintLayout->setAlignment(mPatternNavigationHintCloseButton, Qt::AlignTop);
 
-    connect(mPatternNavigationHintCloseButton, &QAbstractButton::clicked, this, [this]() {
-        mPatternNavigationHintHidden = true;
-        if (mPatternNavigationHintBanner) {
-            mPatternNavigationHintBanner->hide();
-        }
-        if (auto* settings = mudlet::getQSettings()) {
-            settings->setValue(qsl("patternNavigationHintHidden"), true);
-        }
-    });
+    connect(mPatternNavigationHintCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::handlePatternNavigationHintDismiss);
 
     updatePatternNavigationHint();
     lay1->insertWidget(lay1->count() - 1, mPatternNavigationHintBanner);
@@ -1363,7 +1357,8 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-    mPatternNavigationHintBanner->setVisible(!mPatternNavigationHintHidden);
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey);
+    mPatternNavigationHintBanner->setVisible(!mPatternNavigationHintHidden && !permanentlyHidden);
 
     constexpr int baseHorizontalPadding = 12;
     constexpr int baseVerticalPadding = 12;
@@ -1380,8 +1375,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         }
     }
 
-    static const auto bannerKey = qsl("pattern-navigation");
-    const QString settingsKey = bannerSettingsKey(EditorViewType::cmTriggerView, bannerKey);
+    const QString settingsKey = bannerSettingsKey(EditorViewType::cmTriggerView, patternNavigationBannerKey);
     const QString baseKey = bannerSettingsKey(EditorViewType::cmTriggerView, QString());
     if (settingsKey.isEmpty()) {
         return;
@@ -1410,6 +1404,99 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         "</ul>"
     ));
     
+}
+
+
+void dlgTriggerEditor::handlePatternNavigationHintDismiss()
+{
+    mPatternNavigationHintHidden = true;
+    if (mPatternNavigationHintBanner) {
+        mPatternNavigationHintBanner->hide();
+    }
+
+    if (auto* settings = mudlet::getQSettings()) {
+        settings->setValue(qsl("patternNavigationHintHidden"), true);
+    }
+
+    showPatternNavigationHintUndoToast();
+}
+
+void dlgTriggerEditor::showPatternNavigationHintUndoToast()
+{
+    if (!mpSystemMessageArea) {
+        return;
+    }
+
+    if (mpBannerUndoTimer) {
+        mpBannerUndoTimer->stop();
+        mpBannerUndoTimer->deleteLater();
+    }
+
+    mCurrentBannerKey.clear();
+
+    mpBannerUndoTimer = new QTimer(this);
+    mpBannerUndoTimer->setSingleShot(true);
+    mpBannerUndoTimer->setInterval(std::chrono::seconds(5));
+
+    //: Toast notification shown when user dismisses the trigger pattern navigation hint. Allows them to undo or permanently hide the hint.
+    const QString toastMessage = tr("Hint hidden. <a href='undo' style='color: inherit; text-decoration: underline;'>Undo</a> | <a href='hide-permanently' style='color: inherit; text-decoration: underline;'>Hide permanently</a>");
+
+    mpSystemMessageArea->notificationAreaIconLabelError->hide();
+    mpSystemMessageArea->notificationAreaIconLabelWarning->hide();
+    mpSystemMessageArea->notificationAreaIconLabelInformation->show();
+    mpSystemMessageArea->notificationAreaMessageBox->setText(toastMessage);
+    mpSystemMessageArea->show();
+
+    connect(mpBannerUndoTimer, &QTimer::timeout, this, &dlgTriggerEditor::hideSystemMessageArea);
+    mpBannerUndoTimer->start();
+
+    disconnect(mpSystemMessageArea->notificationAreaMessageBox, &QLabel::linkActivated, nullptr, nullptr);
+    connect(mpSystemMessageArea->notificationAreaMessageBox, &QLabel::linkActivated, this, [this](const QString& link) {
+        if (link == QLatin1String("undo")) {
+            undoPatternNavigationHintDismiss();
+        } else if (link == QLatin1String("hide-permanently")) {
+            handlePatternNavigationHintPermanentDismiss();
+        } else {
+            slot_clickedMessageBox(link);
+        }
+    });
+}
+
+void dlgTriggerEditor::undoPatternNavigationHintDismiss()
+{
+    if (mpBannerUndoTimer) {
+        mpBannerUndoTimer->stop();
+        mpBannerUndoTimer->deleteLater();
+        mpBannerUndoTimer = nullptr;
+    }
+
+    mPatternNavigationHintHidden = false;
+    if (auto* settings = mudlet::getQSettings()) {
+        settings->setValue(qsl("patternNavigationHintHidden"), false);
+    }
+
+    setBannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
+
+    updatePatternNavigationHint();
+    hideSystemMessageArea();
+}
+
+void dlgTriggerEditor::handlePatternNavigationHintPermanentDismiss()
+{
+    if (mpBannerUndoTimer) {
+        mpBannerUndoTimer->stop();
+        mpBannerUndoTimer->deleteLater();
+        mpBannerUndoTimer = nullptr;
+    }
+
+    mPatternNavigationHintHidden = true;
+    if (auto* settings = mudlet::getQSettings()) {
+        settings->setValue(qsl("patternNavigationHintHidden"), true);
+    }
+
+    setBannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, true);
+
+    hideSystemMessageArea();
 }
 
 

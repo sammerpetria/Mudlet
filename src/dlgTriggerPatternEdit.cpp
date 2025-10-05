@@ -30,6 +30,7 @@
 #include <QPlainTextEdit>
 #include <QColor>
 #include <QComboBox>
+#include <QFont>
 #include <QLineEdit>
 #include <QPalette>
 #include <QWidget>
@@ -78,6 +79,8 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         resetThemePalette();
         return;
     }
+
+    const QFont patternFont = singleLineTextEdit_pattern->font();
 
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
@@ -152,6 +155,11 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     applyToWidget(pushButton_fgColor);
     applyToWidget(pushButton_bgColor);
     applyToWidget(singleLineTextEdit_pattern);
+
+    singleLineTextEdit_pattern->setFont(patternFont);
+    if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
+        patternViewport->setFont(patternFont);
+    }
 }
 
 void dlgTriggerPatternEdit::resetThemePalette()

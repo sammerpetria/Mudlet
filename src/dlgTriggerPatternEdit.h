@@ -57,6 +57,9 @@ private:
     QPalette mDefaultSpinPalette;
     QPalette mDefaultForegroundButtonPalette;
     QPalette mDefaultBackgroundButtonPalette;
+    QPalette mDefaultPatternEditPalette;
+    QPalette mDefaultPatternEditViewportPalette;
+    bool mDefaultPatternEditViewportAutoFillBackground = false;
 };
 
 #endif // MUDLET_DLGTRIGGERPATTERNEDIT_H

@@ -54,6 +54,8 @@
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QFont>
+#include <QFrame>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QMargins>
 #include <QMessageBox>
@@ -62,8 +64,10 @@
 #include <QScrollBar>
 #include <QShortcut>
 #include <QSpinBox>
+#include <QStyle>
 #include <QTextCursor>
 #include <QShowEvent>
+#include <QToolButton>
 #include <QToolBar>
 #include <QVBoxLayout>
 
@@ -1012,6 +1016,60 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
 
     lay1->addStretch();
 
+    mPatternNavigationHintBanner = new QFrame(mpWidget_triggerItems);
+    mPatternNavigationHintBanner->setObjectName(qsl("patternNavigationHintBanner"));
+    mPatternNavigationHintBanner->setFrameShape(QFrame::StyledPanel);
+    mPatternNavigationHintBanner->setFrameShadow(QFrame::Raised);
+    mPatternNavigationHintBanner->setFocusPolicy(Qt::StrongFocus);
+
+    auto* patternNavigationHintLayout = new QHBoxLayout(mPatternNavigationHintBanner);
+    patternNavigationHintLayout->setContentsMargins(12, 12, 12, 12);
+    patternNavigationHintLayout->setSpacing(8);
+
+    auto* patternNavigationHintIcon = new QLabel(mPatternNavigationHintBanner);
+    patternNavigationHintIcon->setObjectName(qsl("patternNavigationHintIcon"));
+    patternNavigationHintIcon->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    const int patternNavigationHintIconSize = qMax(24, style()->pixelMetric(QStyle::PM_SmallIconSize, nullptr, mPatternNavigationHintBanner));
+    patternNavigationHintIcon->setPixmap(QIcon(qsl(":/icons/dialog-information.png")).pixmap(patternNavigationHintIconSize, patternNavigationHintIconSize));
+    patternNavigationHintLayout->addWidget(patternNavigationHintIcon);
+
+    mPatternNavigationHintLabel = new QLabel(mPatternNavigationHintBanner);
+    mPatternNavigationHintLabel->setObjectName(qsl("patternNavigationHintLabel"));
+    mPatternNavigationHintLabel->setWordWrap(true);
+    mPatternNavigationHintLabel->setTextFormat(Qt::RichText);
+    mPatternNavigationHintLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    mPatternNavigationHintLabel->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse);
+    QFont hintFont = mPatternNavigationHintLabel->font();
+    hintFont.setPointSizeF(qMax(7.0, hintFont.pointSizeF() - 1.0));
+    mPatternNavigationHintLabel->setFont(hintFont);
+    patternNavigationHintLayout->addWidget(mPatternNavigationHintLabel, 1);
+
+    mPatternNavigationHintCloseButton = new QToolButton(mPatternNavigationHintBanner);
+    mPatternNavigationHintCloseButton->setObjectName(qsl("patternNavigationHintCloseButton"));
+    mPatternNavigationHintCloseButton->setAutoRaise(true);
+    mPatternNavigationHintCloseButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
+    //: Tooltip for the button that hides the pattern navigation hint banner.
+    mPatternNavigationHintCloseButton->setToolTip(tr("Hide this hint"));
+    patternNavigationHintLayout->addWidget(mPatternNavigationHintCloseButton);
+    patternNavigationHintLayout->setAlignment(mPatternNavigationHintCloseButton, Qt::AlignTop);
+
+    connect(mPatternNavigationHintCloseButton, &QAbstractButton::clicked, this, [this]() {
+        mPatternNavigationHintHidden = true;
+        if (mPatternNavigationHintBanner) {
+            mPatternNavigationHintBanner->hide();
+        }
+        if (auto* settings = mudlet::getQSettings()) {
+            settings->setValue(qsl("patternNavigationHintHidden"), true);
+        }
+    });
+
+    updatePatternNavigationHint();
+    lay1->insertWidget(lay1->count() - 1, mPatternNavigationHintBanner);
+
+    if (mPatternNavigationHintHidden && mPatternNavigationHintBanner) {
+        mPatternNavigationHintBanner->hide();
+    }
+
     QPixmap pixMap_subString(256, 256);
     pixMap_subString.fill(Qt::black);
     const QIcon icon_subString(pixMap_subString);
@@ -1128,7 +1186,13 @@ void dlgTriggerEditor::createPatternItem(int index)
     connect(pItem->spinBox_lineSpacer, qOverload<int>(&QSpinBox::valueChanged), this, &dlgTriggerEditor::slot_itemEdited);
 
     auto* pLayout = static_cast<QVBoxLayout*>(mpWidget_triggerItems->layout());
-    const int insertIndex = qMax(0, pLayout->count() - 1);
+    int insertIndex = pLayout->count() - 1;
+    if (mPatternNavigationHintBanner) {
+        const int hintIndex = pLayout->indexOf(mPatternNavigationHintBanner);
+        if (hintIndex >= 0) {
+            insertIndex = hintIndex;
+        }
+    }
     pLayout->insertWidget(insertIndex, pItem);
 
     mTriggerPatternEdit.push_back(pItem);
@@ -1293,13 +1357,24 @@ void dlgTriggerEditor::setupPatternNavigationShortcuts()
 
 void dlgTriggerEditor::updatePatternNavigationHint()
 {
-    if (mCurrentView != EditorViewType::cmTriggerView) {
+    if (!mPatternNavigationHintBanner || !mPatternNavigationHintLabel) {
         return;
     }
 
-    if (!mpTriggersMainArea || !mpTriggersMainArea->isVisible()) {
-        return;
-    }
+    mPatternNavigationHintBanner->setVisible(!mPatternNavigationHintHidden);
+
+    constexpr int baseHorizontalPadding = 12;
+    constexpr int baseVerticalPadding = 12;
+
+    int leftMargin = 0;
+    if (mpWidget_triggerItems && mPatternNavigationHintBanner->isVisible()) {
+        const QPoint hintPos = mPatternNavigationHintBanner->mapTo(mpWidget_triggerItems, QPoint());
+        const int itemCount = qMin(mVisiblePatternCount, mTriggerPatternEdit.size());
+        for (int i = 0; i < itemCount; ++i) {
+            auto* patternItem = mTriggerPatternEdit.value(i, nullptr);
+            if (!patternItem || !patternItem->isVisible()) {
+                continue;
+            }
 
     static const auto bannerKey = qsl("pattern-navigation");
     const QString settingsKey = bannerSettingsKey(EditorViewType::cmTriggerView, bannerKey);
@@ -1312,31 +1387,28 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-    if (bannerPermanentlyHidden(EditorViewType::cmTriggerView, bannerKey)) {
-        return;
+    const int topMargin = qMax(baseVerticalPadding, mPatternNavigationHintLabel->fontMetrics().lineSpacing());
+    auto* bannerLayout = qobject_cast<QHBoxLayout*>(mPatternNavigationHintBanner->layout());
+    if (bannerLayout) {
+        const QMargins currentMargins = bannerLayout->contentsMargins();
+        const int desiredLeft = baseHorizontalPadding + leftMargin;
+        if (currentMargins.left() != desiredLeft || currentMargins.top() != topMargin
+            || currentMargins.right() != baseHorizontalPadding || currentMargins.bottom() != baseVerticalPadding) {
+            bannerLayout->setContentsMargins(desiredLeft, topMargin, baseHorizontalPadding, baseVerticalPadding);
+        }
     }
 
-    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey != bannerKey
-        && !mpSystemMessageArea->notificationAreaMessageBox->text().isEmpty()) {
-        return;
-    }
+    mPatternNavigationHintLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-    //: Hint shown below trigger patterns explaining navigation shortcuts. Uses HTML for a heading and bullet list.
-    const QString content = tr(
-        "<p><strong>Pattern navigation shortcuts</strong></p>"
+    //: Hint shown below trigger patterns explaining navigation shortcuts. Contains HTML markup.
+    mPatternNavigationHintLabel->setText(tr(
+        "<p><strong>Navigation shortcuts</strong></p>"
         "<ul>"
-        "<li><code>Ctrl+F</code> focuses the first pattern field.</li>"
-        "<li><code>Ctrl+L</code> jumps to the last visible pattern.</li>"
-        "<li><code>Ctrl+Up</code> / <code>Ctrl+Down</code> move between pattern fields.</li>"
-        "<li><code>Ctrl+Tab</code> toggles with the Lua code editor.</li>"
-        "</ul>");
-
-    if (mpSystemMessageArea->isVisible() && mCurrentBannerKey == bannerKey
-        && mpSystemMessageArea->notificationAreaMessageBox->text() == content) {
-        return;
-    }
-
-    showHideableBanner(content, bannerKey);
+        "<li>Press <strong>Ctrl+F</strong> to focus the first pattern field.</li>"
+        "<li>Press <strong>Ctrl+L</strong> to jump to the last visible pattern field.</li>"
+        "<li>Press <strong>Ctrl+Up</strong> or <strong>Ctrl+Down</strong> to move between pattern fields.</li>"
+        "<li>Press <strong>Ctrl+Tab</strong> to toggle the Lua code editor.</li>"
+        "</ul>"));
 }
 
 
@@ -1445,6 +1517,8 @@ void dlgTriggerEditor::readSettings()
     mTimerEditorSplitterState = settings.value("mTimerEditorSplitterState", QByteArray()).toByteArray();
     mVarEditorSplitterState = settings.value("mVarEditorSplitterState", QByteArray()).toByteArray();
     mSearchSplitterState = settings.value("mSearchSplitterState", QByteArray()).toByteArray();
+
+    mPatternNavigationHintHidden = settings.value(qsl("patternNavigationHintHidden"), false).toBool();
 }
 
 void dlgTriggerEditor::writeSettings()
@@ -1462,6 +1536,8 @@ void dlgTriggerEditor::writeSettings()
     settings.setValue("mTimerEditorSplitterState", mTimerEditorSplitterState);
     settings.setValue("mVarEditorSplitterState", mVarEditorSplitterState);
     settings.setValue("mSearchSplitterState", mSearchSplitterState);
+
+    settings.setValue(qsl("patternNavigationHintHidden"), mPatternNavigationHintHidden);
 }
 
 void dlgTriggerEditor::slot_itemSelectedInSearchResults(QTreeWidgetItem* pItem)
@@ -6739,6 +6815,7 @@ void dlgTriggerEditor::updatePatternTabOrder()
     addToChain(mpTriggersMainArea->groupBox_triggerColorizer);
     addToChain(mpTriggersMainArea->pushButtonFgColor);
     addToChain(mpTriggersMainArea->pushButtonBgColor);
+    addToChain(mPatternNavigationHintBanner);
     addToChain(mpSourceEditorEdbee);
 
 }

@@ -669,6 +669,9 @@ private:
     void showIntro(const QString& = QString());
     void showHideableBanner(const QString& content, const QString& bannerKey);
     [[nodiscard]] QString bannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const;
+    [[nodiscard]] QString legacyBannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const;
+    [[nodiscard]] QString profileSettingsPrefix() const;
+    [[nodiscard]] QString patternNavigationHintSettingsKey() const;
 
     // Banner state tracking
     QTimer* mpBannerUndoTimer = nullptr;
@@ -683,7 +686,7 @@ private:
     void showBannerUndoToast();
     void undoBannerDismiss();
     void handlePermanentBannerDismiss();
-    bool bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey = QString());
+    bool bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey = QString(), bool includeBasePreference = true);
     void setBannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool hidden);
 
     QString descActive;

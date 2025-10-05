@@ -30,7 +30,6 @@
 #include <QPlainTextEdit>
 #include <QColor>
 #include <QComboBox>
-#include <QFont>
 #include <QLineEdit>
 #include <QPalette>
 #include <QWidget>
@@ -137,7 +136,6 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
             if (auto* viewport = plainTextEdit->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
-                viewport->setFont(patternFont);
             }
         } else if (auto* scrollArea = qobject_cast<QAbstractScrollArea*>(widget)) {
             if (auto* viewport = scrollArea->viewport()) {
@@ -156,9 +154,6 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     applyToWidget(pushButton_bgColor);
     applyToWidget(singleLineTextEdit_pattern);
 
-    if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
-        patternViewport->setFont(patternFont);
-    }
 }
 
 void dlgTriggerPatternEdit::resetThemePalette()
@@ -172,9 +167,7 @@ void dlgTriggerPatternEdit::resetThemePalette()
     label_patternNumber->setPalette(mDefaultPatternNumberPalette);
     label_patternNumber->setFont(patternFont);
     label_prompt->setPalette(mDefaultPromptPalette);
-    label_prompt->setFont(patternFont);
     label_colorIcon->setPalette(mDefaultColorIconPalette);
-    label_colorIcon->setFont(patternFont);
     comboBox_patternType->setPalette(mDefaultComboPalette);
     comboBox_patternType->setFont(patternFont);
     spinBox_lineSpacer->setPalette(mDefaultSpinPalette);

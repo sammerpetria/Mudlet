@@ -683,7 +683,7 @@ private:
     void showBannerUndoToast();
     void undoBannerDismiss();
     void handlePermanentBannerDismiss();
-    bool bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey = QString());
+    bool bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey = QString(), bool includeBasePreference = true);
     void setBannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool hidden);
 
     QString descActive;

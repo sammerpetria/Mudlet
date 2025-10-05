@@ -30,6 +30,7 @@
 #include <QPlainTextEdit>
 #include <QColor>
 #include <QComboBox>
+#include <QFont>
 #include <QLineEdit>
 #include <QPalette>
 #include <QWidget>
@@ -74,10 +75,8 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         return;
     }
 
-    if (baseColor.lightness() >= textColor.lightness()) {
-        resetThemePalette();
-        return;
-    }
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+    setFont(patternFont);
 
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
@@ -115,16 +114,19 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     auto applyToWidget = [&](QWidget* widget) {
         QPalette widgetPalette = makePalette(editorPalette);
         widget->setPalette(widgetPalette);
+        widget->setFont(patternFont);
 
         if (auto* spinBox = qobject_cast<QAbstractSpinBox*>(widget)) {
             if (auto* lineEdit = spinBox->findChild<QLineEdit*>()) {
                 lineEdit->setPalette(widgetPalette);
+                lineEdit->setFont(patternFont);
             }
         }
 
         if (auto* comboBox = qobject_cast<QComboBox*>(widget)) {
             if (auto* view = comboBox->view()) {
                 view->setPalette(widgetPalette);
+                view->setFont(patternFont);
             }
         }
 
@@ -136,11 +138,13 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
             if (auto* viewport = plainTextEdit->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
+                viewport->setFont(patternFont);
             }
         } else if (auto* scrollArea = qobject_cast<QAbstractScrollArea*>(widget)) {
             if (auto* viewport = scrollArea->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
+                viewport->setFont(patternFont);
             }
         }
     };

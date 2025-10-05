@@ -1357,7 +1357,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey);
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
     mPatternNavigationHintBanner->setVisible(!mPatternNavigationHintHidden && !permanentlyHidden);
 
     constexpr int baseHorizontalPadding = 12;
@@ -1607,6 +1607,13 @@ void dlgTriggerEditor::readSettings()
     mSearchSplitterState = settings.value("mSearchSplitterState", QByteArray()).toByteArray();
 
     mPatternNavigationHintHidden = settings.value(qsl("patternNavigationHintHidden"), false).toBool();
+
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
+    if (mPatternNavigationHintHidden && !permanentlyHidden) {
+        mPatternNavigationHintHidden = false;
+        settings.setValue(qsl("patternNavigationHintHidden"), false);
+        updatePatternNavigationHint();
+    }
 }
 
 void dlgTriggerEditor::writeSettings()
@@ -12322,7 +12329,7 @@ void dlgTriggerEditor::handlePermanentBannerDismiss()
     mCurrentBannerKey.clear();
 }
 
-bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey)
+bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool includeBasePreference)
 {
     const QString key = bannerSettingsKey(viewType, bannerKey);
     const QString baseKey = bannerSettingsKey(viewType, QString());
@@ -12331,7 +12338,7 @@ bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QS
     }
 
     QSettings* settings = mudlet::getQSettings();
-    if (!bannerKey.isEmpty() && !baseKey.isEmpty()) {
+    if (includeBasePreference && !bannerKey.isEmpty() && !baseKey.isEmpty()) {
         if (settings->value(qsl("Editor/banner_permanently_hidden/%1").arg(baseKey), false).toBool()) {
             return true;
         }

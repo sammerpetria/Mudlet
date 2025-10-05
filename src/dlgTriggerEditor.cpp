@@ -1027,7 +1027,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     mPatternNavigationHintBanner->setFocusPolicy(Qt::StrongFocus);
 
     auto* patternNavigationHintLayout = new QHBoxLayout(mPatternNavigationHintBanner);
-    patternNavigationHintLayout->setContentsMargins(12, 12, 12, 12);
+    patternNavigationHintLayout->setContentsMargins(5, 12, 12, 12);
     patternNavigationHintLayout->setSpacing(8);
 
     auto* patternNavigationHintIcon = new QLabel(mPatternNavigationHintBanner);
@@ -1357,7 +1357,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey);
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
     mPatternNavigationHintBanner->setVisible(!mPatternNavigationHintHidden && !permanentlyHidden);
 
     constexpr int baseHorizontalPadding = 12;
@@ -1415,7 +1415,8 @@ void dlgTriggerEditor::handlePatternNavigationHintDismiss()
     }
 
     if (auto* settings = mudlet::getQSettings()) {
-        settings->setValue(qsl("patternNavigationHintHidden"), true);
+        const QString patternHintKey = patternNavigationHintSettingsKey();
+        settings->setValue(patternHintKey, true);
     }
 
     showPatternNavigationHintUndoToast();
@@ -1472,7 +1473,8 @@ void dlgTriggerEditor::undoPatternNavigationHintDismiss()
 
     mPatternNavigationHintHidden = false;
     if (auto* settings = mudlet::getQSettings()) {
-        settings->setValue(qsl("patternNavigationHintHidden"), false);
+        const QString patternHintKey = patternNavigationHintSettingsKey();
+        settings->setValue(patternHintKey, false);
     }
 
     setBannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
@@ -1491,7 +1493,8 @@ void dlgTriggerEditor::handlePatternNavigationHintPermanentDismiss()
 
     mPatternNavigationHintHidden = true;
     if (auto* settings = mudlet::getQSettings()) {
-        settings->setValue(qsl("patternNavigationHintHidden"), true);
+        const QString patternHintKey = patternNavigationHintSettingsKey();
+        settings->setValue(patternHintKey, true);
     }
 
     setBannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, true);
@@ -1606,7 +1609,20 @@ void dlgTriggerEditor::readSettings()
     mVarEditorSplitterState = settings.value("mVarEditorSplitterState", QByteArray()).toByteArray();
     mSearchSplitterState = settings.value("mSearchSplitterState", QByteArray()).toByteArray();
 
-    mPatternNavigationHintHidden = settings.value(qsl("patternNavigationHintHidden"), false).toBool();
+    const QString patternHintKey = patternNavigationHintSettingsKey();
+    const QString legacyPatternHintKey = qsl("patternNavigationHintHidden");
+    if (!patternHintKey.isEmpty() && patternHintKey != legacyPatternHintKey && settings.contains(legacyPatternHintKey)) {
+        settings.remove(legacyPatternHintKey);
+    }
+
+    mPatternNavigationHintHidden = settings.value(patternHintKey, false).toBool();
+
+    const bool permanentlyHidden = bannerPermanentlyHidden(EditorViewType::cmTriggerView, patternNavigationBannerKey, false);
+    if (mPatternNavigationHintHidden && !permanentlyHidden) {
+        mPatternNavigationHintHidden = false;
+        settings.setValue(patternHintKey, false);
+        updatePatternNavigationHint();
+    }
 }
 
 void dlgTriggerEditor::writeSettings()
@@ -1625,7 +1641,8 @@ void dlgTriggerEditor::writeSettings()
     settings.setValue("mVarEditorSplitterState", mVarEditorSplitterState);
     settings.setValue("mSearchSplitterState", mSearchSplitterState);
 
-    settings.setValue(qsl("patternNavigationHintHidden"), mPatternNavigationHintHidden);
+    const QString patternHintKey = patternNavigationHintSettingsKey();
+    settings.setValue(patternHintKey, mPatternNavigationHintHidden);
 }
 
 void dlgTriggerEditor::slot_itemSelectedInSearchResults(QTreeWidgetItem* pItem)
@@ -9311,7 +9328,15 @@ void dlgTriggerEditor::showIntro(const QString& desiredOption)
     }
 
     static const auto bannerKey = qsl("intro");
-    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
+    bool includeBasePreference = true;
+    if (mCurrentView == EditorViewType::cmTriggerView) {
+        // The trigger intro banner predates the global suppression toggle, so keep
+        // honouring only its explicit "hide permanently" preference to ensure it
+        // still shows up for profiles that never opted out directly.
+        includeBasePreference = false;
+    }
+
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey, includeBasePreference)) {
         return;
     }
 
@@ -9346,7 +9371,15 @@ void dlgTriggerEditor::showHideableBanner(const QString& content, const QString&
         return;
     }
 
-    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
+    bool includeBasePreference = true;
+    if (mCurrentView == EditorViewType::cmTriggerView && bannerKey == qsl("intro")) {
+        // Match the behaviour in showIntro(): ignore the view-wide suppression
+        // switch so the legacy trigger intro reappears unless it was hidden via
+        // its own banner controls.
+        includeBasePreference = false;
+    }
+
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey, includeBasePreference)) {
         return;
     }
 
@@ -9373,6 +9406,21 @@ void dlgTriggerEditor::showHideableBanner(const QString& content, const QString&
 
 QString dlgTriggerEditor::bannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const
 {
+    const QString legacyKey = legacyBannerSettingsKey(viewType, bannerKey);
+    if (legacyKey.isEmpty()) {
+        return legacyKey;
+    }
+
+    const QString prefix = profileSettingsPrefix();
+    if (prefix.isEmpty()) {
+        return legacyKey;
+    }
+
+    return qsl("%1/%2").arg(prefix, legacyKey);
+}
+
+QString dlgTriggerEditor::legacyBannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const
+{
     const QMetaEnum metaEnum = QMetaEnum::fromType<EditorViewType>();
     const char* enumName = metaEnum.valueToKey(static_cast<int>(viewType));
 
@@ -9386,6 +9434,35 @@ QString dlgTriggerEditor::bannerSettingsKey(EditorViewType viewType, const QStri
     }
 
     return key;
+}
+
+QString dlgTriggerEditor::profileSettingsPrefix() const
+{
+    if (!mpHost) {
+        return QString();
+    }
+
+    const QString profileName = mpHost->getName();
+    if (profileName.isEmpty()) {
+        return QString();
+    }
+
+    const QString sanitized = utils::sanitizeForPath(profileName);
+    if (sanitized.isEmpty()) {
+        return QString();
+    }
+
+    return qsl("profiles/%1").arg(sanitized);
+}
+
+QString dlgTriggerEditor::patternNavigationHintSettingsKey() const
+{
+    const QString prefix = profileSettingsPrefix();
+    if (prefix.isEmpty()) {
+        return qsl("patternNavigationHintHidden");
+    }
+
+    return qsl("%1/patternNavigationHintHidden").arg(prefix);
 }
 
 void dlgTriggerEditor::slot_showActions()
@@ -11918,6 +11995,14 @@ void dlgTriggerEditor::slot_showAllTriggerControls(const bool isShown)
         mpTriggersMainArea->toolButton_toggleExtraControls->setChecked(isShown);
     }
 
+    const QString toggleText = isShown ? tr("Hide extra options") : tr("Show extra options");
+    mpTriggersMainArea->toolButton_toggleExtraControls->setText(toggleText);
+
+    const QString toggleAction = isShown ? tr("hide the extra trigger options") : tr("show the extra trigger options");
+    //: Tooltip shown on the trigger extra options toggle button. %1 is replaced with the action that clicking the button will perform.
+    const QString toggleTooltip = tr("Use this control to show or hide the extra trigger options; click to %1.").arg(toggleAction);
+    mpTriggersMainArea->toolButton_toggleExtraControls->setToolTip(utils::richText(toggleTooltip));
+
     if (mpTriggersMainArea->widget_right->isVisible() != isShown) {
         mpTriggersMainArea->widget_right->setVisible(isShown);
     }
@@ -12309,6 +12394,13 @@ void dlgTriggerEditor::undoBannerDismiss()
 
     setBannerPermanentlyHidden(mLastDismissedBannerView, mLastDismissedBannerKey, false);
 
+    // Remove the undo toast before restoring the banner so the new content can
+    // be shown immediately without being blocked by the active notification.
+    if (mpSystemMessageArea) {
+        mpSystemMessageArea->hide();
+    }
+    mCurrentBannerKey.clear();
+
     if (mLastDismissedBannerView == mCurrentView && !mLastDismissedBannerContent.isEmpty()) {
         showHideableBanner(mLastDismissedBannerContent, mLastDismissedBannerKey);
     }
@@ -12322,16 +12414,38 @@ void dlgTriggerEditor::handlePermanentBannerDismiss()
     mCurrentBannerKey.clear();
 }
 
-bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey)
+bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool includeBasePreference)
 {
     const QString key = bannerSettingsKey(viewType, bannerKey);
     const QString baseKey = bannerSettingsKey(viewType, QString());
+    const QString legacyKey = legacyBannerSettingsKey(viewType, bannerKey);
+    const QString legacyBaseKey = legacyBannerSettingsKey(viewType, QString());
     if (key.isEmpty()) {
         return false;
     }
 
     QSettings* settings = mudlet::getQSettings();
-    if (!bannerKey.isEmpty() && !baseKey.isEmpty()) {
+    if (!settings) {
+        return false;
+    }
+
+    auto migrateLegacyKey = [settings](const QString& newKey, const QString& oldKey) {
+        if (newKey.isEmpty() || oldKey.isEmpty() || newKey == oldKey) {
+            return;
+        }
+
+        const QString oldPath = qsl("Editor/banner_permanently_hidden/%1").arg(oldKey);
+        if (!settings->contains(oldPath)) {
+            return;
+        }
+
+        settings->remove(oldPath);
+    };
+
+    migrateLegacyKey(key, legacyKey);
+    migrateLegacyKey(baseKey, legacyBaseKey);
+
+    if (includeBasePreference && !bannerKey.isEmpty() && !baseKey.isEmpty()) {
         if (settings->value(qsl("Editor/banner_permanently_hidden/%1").arg(baseKey), false).toBool()) {
             return true;
         }
@@ -12343,12 +12457,17 @@ bool dlgTriggerEditor::bannerPermanentlyHidden(EditorViewType viewType, const QS
 void dlgTriggerEditor::setBannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool hidden)
 {
     const QString key = bannerSettingsKey(viewType, bannerKey);
+    const QString legacyKey = legacyBannerSettingsKey(viewType, bannerKey);
     if (key.isEmpty()) {
         return;
     }
 
     QSettings* settings = mudlet::getQSettings();
     settings->setValue(qsl("Editor/banner_permanently_hidden/%1").arg(key), hidden);
+
+    if (!legacyKey.isEmpty() && legacyKey != key) {
+        settings->remove(qsl("Editor/banner_permanently_hidden/%1").arg(legacyKey));
+    }
 
     if (!hidden) {
         mTemporarilyHiddenBanners.remove(key);

@@ -23,7 +23,11 @@
 #include "dlgTriggerPatternEdit.h"
 
 #include "pre_guard.h"
+#include <QAbstractButton>
+#include <QAbstractSpinBox>
 #include <QColor>
+#include <QComboBox>
+#include <QLineEdit>
 #include <QPalette>
 #include <QWidget>
 #include "post_guard.h"
@@ -57,41 +61,76 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     const QColor baseColor = editorPalette.color(QPalette::Base);
     const QColor textColor = editorPalette.color(QPalette::Text);
 
-    if (!baseColor.isValid() || !textColor.isValid() || baseColor.lightness() >= 128) {
+    if (!baseColor.isValid() || !textColor.isValid()) {
         resetThemePalette();
         return;
     }
 
-    QPalette framePalette = mDefaultPalette;
-    framePalette.setColor(QPalette::Window, baseColor);
-    framePalette.setColor(QPalette::Base, baseColor);
-    framePalette.setColor(QPalette::AlternateBase, baseColor);
-    framePalette.setColor(QPalette::WindowText, textColor);
-    framePalette.setColor(QPalette::Text, textColor);
-    framePalette.setColor(QPalette::Button, baseColor);
-    framePalette.setColor(QPalette::ButtonText, textColor);
+    if (baseColor.lightness() >= textColor.lightness()) {
+        resetThemePalette();
+        return;
+    }
 
-    setPalette(framePalette);
-    setAutoFillBackground(true);
+    auto makePalette = [&](QPalette palette) {
+        const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
+        const QColor buttonColor = editorPalette.color(QPalette::Button).isValid() ? editorPalette.color(QPalette::Button) : baseColor;
+        QColor placeholderColor = editorPalette.color(QPalette::PlaceholderText);
+        if (!placeholderColor.isValid()) {
+            placeholderColor = textColor;
+            placeholderColor.setAlphaF(0.6);
+        }
 
-    auto applyToWidget = [&](QWidget* widget, const QPalette& defaultPalette) {
-        QPalette widgetPalette = defaultPalette;
-        widgetPalette.setColor(QPalette::Window, baseColor);
-        widgetPalette.setColor(QPalette::Base, baseColor);
-        widgetPalette.setColor(QPalette::AlternateBase, baseColor);
-        widgetPalette.setColor(QPalette::Text, textColor);
-        widgetPalette.setColor(QPalette::WindowText, textColor);
-        widgetPalette.setColor(QPalette::Button, baseColor);
-        widgetPalette.setColor(QPalette::ButtonText, textColor);
-        widget->setPalette(widgetPalette);
+        palette.setColor(QPalette::Window, baseColor);
+        palette.setColor(QPalette::Base, baseColor);
+        palette.setColor(QPalette::AlternateBase, alternateBase);
+        palette.setColor(QPalette::Button, buttonColor);
+        palette.setColor(QPalette::WindowText, textColor);
+        palette.setColor(QPalette::Text, textColor);
+        palette.setColor(QPalette::ButtonText, textColor);
+        palette.setColor(QPalette::PlaceholderText, placeholderColor);
+
+        palette.setColor(QPalette::Disabled, QPalette::WindowText, textColor);
+        palette.setColor(QPalette::Disabled, QPalette::Text, textColor);
+        palette.setColor(QPalette::Disabled, QPalette::ButtonText, textColor);
+        palette.setColor(QPalette::Disabled, QPalette::Base, baseColor);
+        palette.setColor(QPalette::Disabled, QPalette::Button, buttonColor);
+        palette.setColor(QPalette::Disabled, QPalette::AlternateBase, alternateBase);
+
+        return palette;
     };
 
-    applyToWidget(label_patternNumber, mDefaultPatternNumberPalette);
-    applyToWidget(label_prompt, mDefaultPromptPalette);
-    applyToWidget(comboBox_patternType, mDefaultComboPalette);
-    applyToWidget(spinBox_lineSpacer, mDefaultSpinPalette);
-    applyToWidget(pushButton_fgColor, mDefaultForegroundButtonPalette);
-    applyToWidget(pushButton_bgColor, mDefaultBackgroundButtonPalette);
+    const QPalette darkPalette = makePalette(editorPalette);
+
+    setPalette(darkPalette);
+    setAutoFillBackground(true);
+
+    auto applyToWidget = [&](QWidget* widget) {
+        QPalette widgetPalette = makePalette(editorPalette);
+        widget->setPalette(widgetPalette);
+
+        if (auto* spinBox = qobject_cast<QAbstractSpinBox*>(widget)) {
+            if (auto* lineEdit = spinBox->findChild<QLineEdit*>()) {
+                lineEdit->setPalette(widgetPalette);
+            }
+        }
+
+        if (auto* comboBox = qobject_cast<QComboBox*>(widget)) {
+            if (auto* view = comboBox->view()) {
+                view->setPalette(widgetPalette);
+            }
+        }
+
+        if (auto* button = qobject_cast<QAbstractButton*>(widget)) {
+            button->setAutoFillBackground(true);
+        }
+    };
+
+    applyToWidget(label_patternNumber);
+    applyToWidget(label_prompt);
+    applyToWidget(comboBox_patternType);
+    applyToWidget(spinBox_lineSpacer);
+    applyToWidget(pushButton_fgColor);
+    applyToWidget(pushButton_bgColor);
 }
 
 void dlgTriggerPatternEdit::resetThemePalette()
@@ -105,4 +144,15 @@ void dlgTriggerPatternEdit::resetThemePalette()
     spinBox_lineSpacer->setPalette(mDefaultSpinPalette);
     pushButton_fgColor->setPalette(mDefaultForegroundButtonPalette);
     pushButton_bgColor->setPalette(mDefaultBackgroundButtonPalette);
+
+    if (auto* spinBoxLineEdit = spinBox_lineSpacer->findChild<QLineEdit*>()) {
+        spinBoxLineEdit->setPalette(mDefaultSpinPalette);
+    }
+
+    if (auto* comboBoxView = comboBox_patternType->view()) {
+        comboBoxView->setPalette(mDefaultComboPalette);
+    }
+
+    pushButton_fgColor->setAutoFillBackground(false);
+    pushButton_bgColor->setAutoFillBackground(false);
 }

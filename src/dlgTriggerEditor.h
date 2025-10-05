@@ -56,6 +56,7 @@
 #include <QScrollArea>
 #include <QTreeWidget>
 #include <QDesktopServices>
+#include <QSet>
 #include <QStringList>
 #include <QVector>
 #include "post_guard.h"
@@ -467,7 +468,7 @@ private:
     void recursiveSearchVariables(TVar*, QList<TVar*>&, bool);
 
     void createSearchOptionIcon();
-    void clearEditorNotification() const;
+    void clearEditorNotification();
     void runScheduledCleanReset();
     void autoSave();
     void setupPatternControls(const int type, dlgTriggerPatternEdit* pItem);
@@ -662,19 +663,24 @@ private:
     QMap<EditorViewType, introTextParts> introAddItem;
 
     void showIntro(const QString& = QString());
+    void showHideableBanner(const QString& content, const QString& bannerKey);
+    [[nodiscard]] QString bannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const;
 
     // Banner state tracking
     QTimer* mpBannerUndoTimer = nullptr;
     EditorViewType mLastDismissedBannerView = EditorViewType::cmUnknownView;
     QString mLastDismissedBannerContent;
+    QString mCurrentBannerKey;
+    QString mLastDismissedBannerKey;
+    QSet<QString> mTemporarilyHiddenBanners;
 
     // Banner methods
     void handleBannerDismiss();
     void showBannerUndoToast();
     void undoBannerDismiss();
     void handlePermanentBannerDismiss();
-    bool bannerPermanentlyHidden(EditorViewType viewType);
-    void setBannerPermanentlyHidden(EditorViewType viewType, bool hidden);
+    bool bannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey = QString());
+    void setBannerPermanentlyHidden(EditorViewType viewType, const QString& bannerKey, bool hidden);
 
     QString descActive;
     QString descInactive;

@@ -6578,7 +6578,8 @@ void dlgTriggerEditor::handlePatternChange(dlgTriggerPatternEdit* patternItem, b
         if (type == REGEX_PROMPT) {
             itemHasContent = true;
         } else if (type == REGEX_LINE_SPACER) {
-            itemHasContent = item->spinBox_lineSpacer->value() > 0;
+            itemHasContent = item->spinBox_lineSpacer->value() > 0
+                             || item->spinBox_lineSpacer->isVisible();
             if (forceLineSpacerActive && item == patternItem) {
                 itemHasContent = true;
             }

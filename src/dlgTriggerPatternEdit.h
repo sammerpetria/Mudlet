@@ -53,7 +53,6 @@ private:
     QPalette mDefaultPalette;
     QPalette mDefaultPatternNumberPalette;
     QPalette mDefaultPromptPalette;
-    QPalette mDefaultColorIconPalette;
     QPalette mDefaultComboPalette;
     QPalette mDefaultSpinPalette;
     QPalette mDefaultForegroundButtonPalette;

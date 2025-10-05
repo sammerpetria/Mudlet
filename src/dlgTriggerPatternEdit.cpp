@@ -75,6 +75,9 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         return;
     }
 
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+    setFont(patternFont);
+    
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
         const QColor buttonColor = editorPalette.color(QPalette::Button).isValid() ? editorPalette.color(QPalette::Button) : baseColor;
@@ -108,21 +111,22 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     setPalette(darkPalette);
     setAutoFillBackground(true);
 
-    const QFont patternFont = singleLineTextEdit_pattern->font();
-
     auto applyToWidget = [&](QWidget* widget) {
         QPalette widgetPalette = makePalette(editorPalette);
         widget->setPalette(widgetPalette);
+        widget->setFont(patternFont);
 
         if (auto* spinBox = qobject_cast<QAbstractSpinBox*>(widget)) {
             if (auto* lineEdit = spinBox->findChild<QLineEdit*>()) {
                 lineEdit->setPalette(widgetPalette);
+                lineEdit->setFont(patternFont);
             }
         }
 
         if (auto* comboBox = qobject_cast<QComboBox*>(widget)) {
             if (auto* view = comboBox->view()) {
                 view->setPalette(widgetPalette);
+                view->setFont(patternFont);
             }
         }
 
@@ -131,7 +135,6 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         }
 
         if (auto* plainTextEdit = qobject_cast<QPlainTextEdit*>(widget)) {
-            plainTextEdit->setFont(patternFont);
             if (auto* viewport = plainTextEdit->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
@@ -141,6 +144,7 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
             if (auto* viewport = scrollArea->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
+                viewport->setFont(patternFont);
             }
         }
     };
@@ -153,6 +157,7 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     applyToWidget(pushButton_bgColor);
     applyToWidget(singleLineTextEdit_pattern);
 
+    singleLineTextEdit_pattern->setFont(patternFont);
     if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
         patternViewport->setFont(patternFont);
     }

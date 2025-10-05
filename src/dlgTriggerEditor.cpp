@@ -51,6 +51,7 @@
 
 #include "pre_guard.h"
 #include <QCheckBox>
+#include <QAbstractButton>
 #include <QColorDialog>
 #include <QFileDialog>
 #include <QFont>
@@ -1385,8 +1386,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     }
 
     const int topMargin = qMax(baseVerticalPadding, mPatternNavigationHintLabel->fontMetrics().lineSpacing());
-    auto* bannerLayout = qobject_cast<QHBoxLayout*>(mPatternNavigationHintBanner->layout());
-    if (bannerLayout) {
+    if (auto* bannerLayout = qobject_cast<QHBoxLayout*>(mPatternNavigationHintBanner->layout())) {
         const QMargins currentMargins = bannerLayout->contentsMargins();
         const int desiredLeft = baseHorizontalPadding + leftMargin;
         if (currentMargins.left() != desiredLeft || currentMargins.top() != topMargin
@@ -1398,7 +1398,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     mPatternNavigationHintLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     //: Hint shown below trigger patterns explaining navigation shortcuts. Contains HTML markup.
-    const QString navigationHintText = tr(
+    mPatternNavigationHintLabel->setText(tr(
         "<p><strong>Navigation shortcuts</strong></p>"
         "<ul>"
         "<li>Press <strong>Ctrl+F</strong> to focus the first pattern field.</li>"
@@ -1406,8 +1406,7 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         "<li>Press <strong>Ctrl+Up</strong> or <strong>Ctrl+Down</strong> to move between pattern fields.</li>"
         "<li>Press <strong>Ctrl+Tab</strong> to toggle the Lua code editor.</li>"
         "</ul>"
-    );
-    mPatternNavigationHintLabel->setText(navigationHintText);
+    ));
     
 }
 

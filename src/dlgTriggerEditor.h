@@ -669,6 +669,9 @@ private:
     void showIntro(const QString& = QString());
     void showHideableBanner(const QString& content, const QString& bannerKey);
     [[nodiscard]] QString bannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const;
+    [[nodiscard]] QString legacyBannerSettingsKey(EditorViewType viewType, const QString& bannerKey) const;
+    [[nodiscard]] QString profileSettingsPrefix() const;
+    [[nodiscard]] QString patternNavigationHintSettingsKey() const;
 
     // Banner state tracking
     QTimer* mpBannerUndoTimer = nullptr;

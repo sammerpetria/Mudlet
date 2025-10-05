@@ -11995,6 +11995,14 @@ void dlgTriggerEditor::slot_showAllTriggerControls(const bool isShown)
         mpTriggersMainArea->toolButton_toggleExtraControls->setChecked(isShown);
     }
 
+    const QString toggleText = isShown ? tr("Hide extra options") : tr("Show extra options");
+    mpTriggersMainArea->toolButton_toggleExtraControls->setText(toggleText);
+
+    const QString toggleAction = isShown ? tr("hide the extra trigger options") : tr("show the extra trigger options");
+    //: Tooltip shown on the trigger extra options toggle button. %1 is replaced with the action that clicking the button will perform.
+    const QString toggleTooltip = tr("Use this control to show or hide the extra trigger options; click to %1.").arg(toggleAction);
+    mpTriggersMainArea->toolButton_toggleExtraControls->setToolTip(utils::richText(toggleTooltip));
+
     if (mpTriggersMainArea->widget_right->isVisible() != isShown) {
         mpTriggersMainArea->widget_right->setVisible(isShown);
     }

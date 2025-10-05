@@ -1377,6 +1377,8 @@ void dlgTriggerEditor::updatePatternNavigationHint()
             if (!patternItem || !patternItem->isVisible()) {
                 continue;
             }
+        }
+    }
 
     static const auto bannerKey = qsl("pattern-navigation");
     const QString settingsKey = bannerSettingsKey(EditorViewType::cmTriggerView, bannerKey);

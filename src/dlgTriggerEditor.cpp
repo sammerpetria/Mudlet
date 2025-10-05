@@ -56,6 +56,7 @@
 #include <QFont>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QMargins>
 #include <QMessageBox>
@@ -1383,10 +1384,6 @@ void dlgTriggerEditor::updatePatternNavigationHint()
         return;
     }
 
-    if (mTemporarilyHiddenBanners.contains(settingsKey) || mTemporarilyHiddenBanners.contains(baseKey)) {
-        return;
-    }
-
     const int topMargin = qMax(baseVerticalPadding, mPatternNavigationHintLabel->fontMetrics().lineSpacing());
     auto* bannerLayout = qobject_cast<QHBoxLayout*>(mPatternNavigationHintBanner->layout());
     if (bannerLayout) {
@@ -1401,14 +1398,17 @@ void dlgTriggerEditor::updatePatternNavigationHint()
     mPatternNavigationHintLabel->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
     //: Hint shown below trigger patterns explaining navigation shortcuts. Contains HTML markup.
-    mPatternNavigationHintLabel->setText(tr(
+    const QString navigationHintText = tr(
         "<p><strong>Navigation shortcuts</strong></p>"
         "<ul>"
         "<li>Press <strong>Ctrl+F</strong> to focus the first pattern field.</li>"
         "<li>Press <strong>Ctrl+L</strong> to jump to the last visible pattern field.</li>"
         "<li>Press <strong>Ctrl+Up</strong> or <strong>Ctrl+Down</strong> to move between pattern fields.</li>"
         "<li>Press <strong>Ctrl+Tab</strong> to toggle the Lua code editor.</li>"
-        "</ul>"));
+        "</ul>"
+    );
+    mPatternNavigationHintLabel->setText(navigationHintText);
+    
 }
 
 

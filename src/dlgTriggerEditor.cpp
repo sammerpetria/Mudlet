@@ -9318,7 +9318,15 @@ void dlgTriggerEditor::showIntro(const QString& desiredOption)
     }
 
     static const auto bannerKey = qsl("intro");
-    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
+    bool includeBasePreference = true;
+    if (mCurrentView == EditorViewType::cmTriggerView) {
+        // The trigger intro banner predates the global suppression toggle, so keep
+        // honouring only its explicit "hide permanently" preference to ensure it
+        // still shows up for profiles that never opted out directly.
+        includeBasePreference = false;
+    }
+
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey, includeBasePreference)) {
         return;
     }
 
@@ -9353,7 +9361,15 @@ void dlgTriggerEditor::showHideableBanner(const QString& content, const QString&
         return;
     }
 
-    if (bannerPermanentlyHidden(mCurrentView, bannerKey)) {
+    bool includeBasePreference = true;
+    if (mCurrentView == EditorViewType::cmTriggerView && bannerKey == qsl("intro")) {
+        // Match the behaviour in showIntro(): ignore the view-wide suppression
+        // switch so the legacy trigger intro reappears unless it was hidden via
+        // its own banner controls.
+        includeBasePreference = false;
+    }
+
+    if (bannerPermanentlyHidden(mCurrentView, bannerKey, includeBasePreference)) {
         return;
     }
 

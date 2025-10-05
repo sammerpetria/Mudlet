@@ -77,7 +77,9 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
 
     const QFont patternFont = singleLineTextEdit_pattern->font();
     setFont(patternFont);
-    
+
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
         const QColor buttonColor = editorPalette.color(QPalette::Button).isValid() ? editorPalette.color(QPalette::Button) : baseColor;

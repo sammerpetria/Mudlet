@@ -78,6 +78,8 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     const QFont patternFont = singleLineTextEdit_pattern->font();
     setFont(patternFont);
 
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
         const QColor buttonColor = editorPalette.color(QPalette::Button).isValid() ? editorPalette.color(QPalette::Button) : baseColor;
@@ -156,6 +158,11 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     applyToWidget(pushButton_fgColor);
     applyToWidget(pushButton_bgColor);
     applyToWidget(singleLineTextEdit_pattern);
+
+    singleLineTextEdit_pattern->setFont(patternFont);
+    if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
+        patternViewport->setFont(patternFont);
+    }
 }
 
 void dlgTriggerPatternEdit::resetThemePalette()

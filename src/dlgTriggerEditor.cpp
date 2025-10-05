@@ -12386,6 +12386,13 @@ void dlgTriggerEditor::undoBannerDismiss()
 
     setBannerPermanentlyHidden(mLastDismissedBannerView, mLastDismissedBannerKey, false);
 
+    // Remove the undo toast before restoring the banner so the new content can
+    // be shown immediately without being blocked by the active notification.
+    if (mpSystemMessageArea) {
+        mpSystemMessageArea->hide();
+    }
+    mCurrentBannerKey.clear();
+
     if (mLastDismissedBannerView == mCurrentView && !mLastDismissedBannerContent.isEmpty()) {
         showHideableBanner(mLastDismissedBannerContent, mLastDismissedBannerKey);
     }

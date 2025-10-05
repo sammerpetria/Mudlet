@@ -1117,7 +1117,9 @@ void dlgTriggerEditor::slot_clickedMessageBox(const QString& URL)
 void dlgTriggerEditor::slot_editorThemeChanged()
 {
     for (int i = 0; i < mTriggerPatternEdit.size(); i++) {
-        mTriggerPatternEdit.at(i)->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
+        auto* patternWidget = mTriggerPatternEdit.at(i);
+        patternWidget->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
+        patternWidget->applyThemePalette(patternWidget->singleLineTextEdit_pattern->palette());
     }
 }
 
@@ -1163,6 +1165,7 @@ void dlgTriggerEditor::createPatternItem(int index)
     pItem->singleLineTextEdit_pattern->setFont(patternFont);
     pItem->singleLineTextEdit_pattern->installEventFilter(this);
     pItem->singleLineTextEdit_pattern->setTheme(mpHost->mEditorTheme);
+    pItem->applyThemePalette(pItem->singleLineTextEdit_pattern->palette());
     pItem->spinBox_lineSpacer->installEventFilter(this);
 }
 

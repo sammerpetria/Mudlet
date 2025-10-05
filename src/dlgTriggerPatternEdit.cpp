@@ -23,7 +23,9 @@
 #include "dlgTriggerPatternEdit.h"
 
 #include "pre_guard.h"
+#include <QColor>
 #include <QPalette>
+#include <QWidget>
 #include "post_guard.h"
 
 dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
@@ -32,10 +34,13 @@ dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
     // init generated dialog
     setupUi(this);
 
-    // Ensure the widget background follows the active editor theme instead of
-    // keeping the default bright palette in dark mode.
-    setAutoFillBackground(true);
-    setBackgroundRole(QPalette::Base);
+    mDefaultPalette = palette();
+    mDefaultPatternNumberPalette = label_patternNumber->palette();
+    mDefaultPromptPalette = label_prompt->palette();
+    mDefaultComboPalette = comboBox_patternType->palette();
+    mDefaultSpinPalette = spinBox_lineSpacer->palette();
+    mDefaultForegroundButtonPalette = pushButton_fgColor->palette();
+    mDefaultBackgroundButtonPalette = pushButton_bgColor->palette();
 
     // delay the connection so the pattern type is available for the slot
     connect(comboBox_patternType, qOverload<int>(&QComboBox::currentIndexChanged), this, &dlgTriggerPatternEdit::slot_triggerTypeComboBoxChanged, Qt::QueuedConnection);
@@ -45,4 +50,59 @@ void dlgTriggerPatternEdit::slot_triggerTypeComboBoxChanged(const int index)
 {
     label_colorIcon->setPixmap(comboBox_patternType->itemIcon(index).pixmap(15, 15));
 
+}
+
+void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
+{
+    const QColor baseColor = editorPalette.color(QPalette::Base);
+    const QColor textColor = editorPalette.color(QPalette::Text);
+
+    if (!baseColor.isValid() || !textColor.isValid() || baseColor.lightness() >= 128) {
+        resetThemePalette();
+        return;
+    }
+
+    QPalette framePalette = mDefaultPalette;
+    framePalette.setColor(QPalette::Window, baseColor);
+    framePalette.setColor(QPalette::Base, baseColor);
+    framePalette.setColor(QPalette::AlternateBase, baseColor);
+    framePalette.setColor(QPalette::WindowText, textColor);
+    framePalette.setColor(QPalette::Text, textColor);
+    framePalette.setColor(QPalette::Button, baseColor);
+    framePalette.setColor(QPalette::ButtonText, textColor);
+
+    setPalette(framePalette);
+    setAutoFillBackground(true);
+
+    auto applyToWidget = [&](QWidget* widget, const QPalette& defaultPalette) {
+        QPalette widgetPalette = defaultPalette;
+        widgetPalette.setColor(QPalette::Window, baseColor);
+        widgetPalette.setColor(QPalette::Base, baseColor);
+        widgetPalette.setColor(QPalette::AlternateBase, baseColor);
+        widgetPalette.setColor(QPalette::Text, textColor);
+        widgetPalette.setColor(QPalette::WindowText, textColor);
+        widgetPalette.setColor(QPalette::Button, baseColor);
+        widgetPalette.setColor(QPalette::ButtonText, textColor);
+        widget->setPalette(widgetPalette);
+    };
+
+    applyToWidget(label_patternNumber, mDefaultPatternNumberPalette);
+    applyToWidget(label_prompt, mDefaultPromptPalette);
+    applyToWidget(comboBox_patternType, mDefaultComboPalette);
+    applyToWidget(spinBox_lineSpacer, mDefaultSpinPalette);
+    applyToWidget(pushButton_fgColor, mDefaultForegroundButtonPalette);
+    applyToWidget(pushButton_bgColor, mDefaultBackgroundButtonPalette);
+}
+
+void dlgTriggerPatternEdit::resetThemePalette()
+{
+    setAutoFillBackground(false);
+    setPalette(mDefaultPalette);
+
+    label_patternNumber->setPalette(mDefaultPatternNumberPalette);
+    label_prompt->setPalette(mDefaultPromptPalette);
+    comboBox_patternType->setPalette(mDefaultComboPalette);
+    spinBox_lineSpacer->setPalette(mDefaultSpinPalette);
+    pushButton_fgColor->setPalette(mDefaultForegroundButtonPalette);
+    pushButton_bgColor->setPalette(mDefaultBackgroundButtonPalette);
 }

@@ -82,19 +82,13 @@ void SingleLineTextEdit::setTheme(const QString& themeName)
 
     // set the textedit background and text the same as edbee base settings
     QPalette p = palette();
-    const QColor backgroundColor = theme->backgroundColor();
-    const QColor foregroundColor = theme->foregroundColor();
-    p.setColor(QPalette::Window, backgroundColor);
     p.setColor(QPalette::Base, theme->backgroundColor()); // background
-    p.setColor(QPalette::Text, foregroundColor);
-    p.setColor(QPalette::WindowText, foregroundColor);
-    p.setColor(QPalette::ButtonText, foregroundColor);
+    p.setColor(QPalette::Text, theme->foregroundColor());
 
-    QColor placeholderColor = foregroundColor;
+    QColor placeholderColor = theme->foregroundColor();
     placeholderColor.setAlphaF(0.6);
     p.setColor(QPalette::PlaceholderText, placeholderColor);
     setPalette(p);
-    setAutoFillBackground(true);
     viewport()->setPalette(p);
     viewport()->setAutoFillBackground(true);
 

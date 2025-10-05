@@ -24,6 +24,7 @@
 
 #include "pre_guard.h"
 #include <QAbstractButton>
+#include <QAbstractItemView>
 #include <QAbstractSpinBox>
 #include <QColor>
 #include <QComboBox>

@@ -30,7 +30,6 @@
 #include <QPlainTextEdit>
 #include <QColor>
 #include <QComboBox>
-#include <QFont>
 #include <QLineEdit>
 #include <QPalette>
 #include <QWidget>
@@ -45,6 +44,7 @@ dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
     mDefaultPalette = palette();
     mDefaultPatternNumberPalette = label_patternNumber->palette();
     mDefaultPromptPalette = label_prompt->palette();
+    mDefaultColorIconPalette = label_colorIcon->palette();
     mDefaultComboPalette = comboBox_patternType->palette();
     mDefaultSpinPalette = spinBox_lineSpacer->palette();
     mDefaultForegroundButtonPalette = pushButton_fgColor->palette();
@@ -75,9 +75,6 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         return;
     }
 
-    const QFont patternFont = singleLineTextEdit_pattern->font();
-    setFont(patternFont);
-    
     auto makePalette = [&](QPalette palette) {
         const QColor alternateBase = editorPalette.color(QPalette::AlternateBase).isValid() ? editorPalette.color(QPalette::AlternateBase) : baseColor;
         const QColor buttonColor = editorPalette.color(QPalette::Button).isValid() ? editorPalette.color(QPalette::Button) : baseColor;
@@ -114,19 +111,16 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     auto applyToWidget = [&](QWidget* widget) {
         QPalette widgetPalette = makePalette(editorPalette);
         widget->setPalette(widgetPalette);
-        widget->setFont(patternFont);
 
         if (auto* spinBox = qobject_cast<QAbstractSpinBox*>(widget)) {
             if (auto* lineEdit = spinBox->findChild<QLineEdit*>()) {
                 lineEdit->setPalette(widgetPalette);
-                lineEdit->setFont(patternFont);
             }
         }
 
         if (auto* comboBox = qobject_cast<QComboBox*>(widget)) {
             if (auto* view = comboBox->view()) {
                 view->setPalette(widgetPalette);
-                view->setFont(patternFont);
             }
         }
 
@@ -138,29 +132,24 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
             if (auto* viewport = plainTextEdit->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
-                viewport->setFont(patternFont);
             }
         } else if (auto* scrollArea = qobject_cast<QAbstractScrollArea*>(widget)) {
             if (auto* viewport = scrollArea->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
-                viewport->setFont(patternFont);
             }
         }
     };
 
     applyToWidget(label_patternNumber);
     applyToWidget(label_prompt);
+    applyToWidget(label_colorIcon);
     applyToWidget(comboBox_patternType);
     applyToWidget(spinBox_lineSpacer);
     applyToWidget(pushButton_fgColor);
     applyToWidget(pushButton_bgColor);
     applyToWidget(singleLineTextEdit_pattern);
 
-    singleLineTextEdit_pattern->setFont(patternFont);
-    if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
-        patternViewport->setFont(patternFont);
-    }
 }
 
 void dlgTriggerPatternEdit::resetThemePalette()
@@ -170,6 +159,7 @@ void dlgTriggerPatternEdit::resetThemePalette()
 
     label_patternNumber->setPalette(mDefaultPatternNumberPalette);
     label_prompt->setPalette(mDefaultPromptPalette);
+    label_colorIcon->setPalette(mDefaultColorIconPalette);
     comboBox_patternType->setPalette(mDefaultComboPalette);
     spinBox_lineSpacer->setPalette(mDefaultSpinPalette);
     pushButton_fgColor->setPalette(mDefaultForegroundButtonPalette);

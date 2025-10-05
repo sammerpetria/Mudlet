@@ -90,6 +90,8 @@ class dlgScriptsMainArea;
 class dlgKeysMainArea;
 class dlgTriggerPatternEdit;
 class QLabel;
+class QFrame;
+class QToolButton;
 class TAction;
 class TKey;
 class TConsole;
@@ -548,7 +550,10 @@ private:
 
     QScrollArea* mpScrollArea = nullptr;
     QWidget* mpWidget_triggerItems = nullptr;
-    QLabel* mPatternNavigationHint = nullptr;
+    QFrame* mPatternNavigationHintBanner = nullptr;
+    QLabel* mPatternNavigationHintLabel = nullptr;
+    QToolButton* mPatternNavigationHintCloseButton = nullptr;
+    bool mPatternNavigationHintHidden = false;
     // this widget holds the errors, trigger patterns, and all other widgets that aren't edbee
     // in it, as a workaround for an extra splitter getting created by Qt below the error msg otherwise
     QWidget *mpNonCodeWidgets = nullptr;

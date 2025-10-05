@@ -108,6 +108,9 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
     setPalette(darkPalette);
     setAutoFillBackground(true);
 
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+    setFont(patternFont);
+
     auto applyToWidget = [&](QWidget* widget) {
         QPalette widgetPalette = makePalette(editorPalette);
         widget->setPalette(widgetPalette);
@@ -129,6 +132,7 @@ void dlgTriggerPatternEdit::applyThemePalette(const QPalette& editorPalette)
         }
 
         if (auto* plainTextEdit = qobject_cast<QPlainTextEdit*>(widget)) {
+            plainTextEdit->setFont(patternFont);
             if (auto* viewport = plainTextEdit->viewport()) {
                 viewport->setPalette(widgetPalette);
                 viewport->setAutoFillBackground(true);
@@ -157,26 +161,37 @@ void dlgTriggerPatternEdit::resetThemePalette()
     setAutoFillBackground(false);
     setPalette(mDefaultPalette);
 
+    const QFont patternFont = singleLineTextEdit_pattern->font();
+    setFont(patternFont);
+
     label_patternNumber->setPalette(mDefaultPatternNumberPalette);
+    label_patternNumber->setFont(patternFont);
     label_prompt->setPalette(mDefaultPromptPalette);
     label_colorIcon->setPalette(mDefaultColorIconPalette);
     comboBox_patternType->setPalette(mDefaultComboPalette);
+    comboBox_patternType->setFont(patternFont);
     spinBox_lineSpacer->setPalette(mDefaultSpinPalette);
+    spinBox_lineSpacer->setFont(patternFont);
     pushButton_fgColor->setPalette(mDefaultForegroundButtonPalette);
+    pushButton_fgColor->setFont(patternFont);
     pushButton_bgColor->setPalette(mDefaultBackgroundButtonPalette);
+    pushButton_bgColor->setFont(patternFont);
     singleLineTextEdit_pattern->setPalette(mDefaultPatternEditPalette);
 
     if (auto* patternViewport = singleLineTextEdit_pattern->viewport()) {
         patternViewport->setPalette(mDefaultPatternEditViewportPalette);
         patternViewport->setAutoFillBackground(mDefaultPatternEditViewportAutoFillBackground);
+        patternViewport->setFont(patternFont);
     }
 
     if (auto* spinBoxLineEdit = spinBox_lineSpacer->findChild<QLineEdit*>()) {
         spinBoxLineEdit->setPalette(mDefaultSpinPalette);
+        spinBoxLineEdit->setFont(patternFont);
     }
 
     if (auto* comboBoxView = comboBox_patternType->view()) {
         comboBoxView->setPalette(mDefaultComboPalette);
+        comboBoxView->setFont(patternFont);
     }
 
     pushButton_fgColor->setAutoFillBackground(false);

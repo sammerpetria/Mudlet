@@ -1027,7 +1027,7 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     mPatternNavigationHintBanner->setFocusPolicy(Qt::StrongFocus);
 
     auto* patternNavigationHintLayout = new QHBoxLayout(mPatternNavigationHintBanner);
-    patternNavigationHintLayout->setContentsMargins(12, 12, 12, 12);
+    patternNavigationHintLayout->setContentsMargins(5, 12, 12, 12);
     patternNavigationHintLayout->setSpacing(8);
 
     auto* patternNavigationHintIcon = new QLabel(mPatternNavigationHintBanner);

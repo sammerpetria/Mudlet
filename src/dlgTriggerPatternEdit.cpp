@@ -34,6 +34,8 @@
 #include <QPalette>
 #include <QWidget>
 #include "post_guard.h"
+#include <QAction>
+#include <QDebug>
 
 dlgTriggerPatternEdit::dlgTriggerPatternEdit(QWidget* pParentWidget)
 : QWidget(pParentWidget)

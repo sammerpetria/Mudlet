@@ -23,7 +23,6 @@
  ***************************************************************************/
 
 
-#include "pre_guard.h"
 #include "ui_trigger_pattern_edit.h"
 #include <QPalette>
 #include "post_guard.h"

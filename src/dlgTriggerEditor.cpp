@@ -303,8 +303,12 @@ dlgTriggerEditor::dlgTriggerEditor(Host* pH)
     descActiveOffsetTimer = tr("activated offset timer");
     //: A timer that starts after another timer is currently turned off
     descInactiveOffsetTimer = tr("deactivated offset timer");
+    //: Accessible description for a newly created folder, shown after the folder name
     descNewFolder = tr("new folder");
+    //: Accessible description for a newly created item, shown after the item name
     descNewItem = tr("new item");
+    //: Accessible description indicating an item belongs to a package, shown after the item name. Keep short, as it's appended to other descriptions like "activated, package item"
+    descPackageItem = tr("package item");
 
     setUnifiedTitleAndToolBarOnMac(true); //MAC OSX: make window moveable
     const QString hostName{mpHost->getName()};
@@ -5309,7 +5313,7 @@ void dlgTriggerEditor::addAction(bool isFolder)
     }
     // Otherwise: insert a new root item
     if (!pNewAction) {
-        name = tr("New toolbar");
+        name = isFolder ? tr("New toolbar") : tr("New button");
         pNewAction = new TAction(name, mpHost);
         pNewAction->setCommandButtonUp(cmdButtonUp);
         QStringList nl;
@@ -5640,7 +5644,8 @@ void dlgTriggerEditor::slot_itemEdited()
     }
 
     if (!packageName.isEmpty()) {
-        showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."));
+        //: Package item warning shown in trigger editor when editing package items. Should only be announced to screen readers once per item, not repeatedly on every edit.
+        showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
     }
 }
 
@@ -6465,6 +6470,20 @@ void dlgTriggerEditor::clearEditorNotification()
 {
     mpSystemMessageArea->hide();
     mCurrentBannerKey.clear();
+}
+
+void dlgTriggerEditor::updatePackageItemAccessibility(QTreeWidgetItem* pItem, const QString& currentDescription)
+{
+    // Append package description to existing accessible description
+    // Screen readers will announce: "Item Name, [current description], package item"
+    QString newDescription;
+    if (currentDescription.isEmpty()) {
+        newDescription = descPackageItem;
+    } else {
+        // Combine descriptions: e.g., "activated, package item"
+        newDescription = currentDescription + qsl(", ") + descPackageItem;
+    }
+    pItem->setData(0, Qt::AccessibleDescriptionRole, newDescription);
 }
 
 int dlgTriggerEditor::canRecast(QTreeWidgetItem* pItem, int newNameType, int newValueType)
@@ -7392,6 +7411,26 @@ void dlgTriggerEditor::slot_triggerSelected(QTreeWidgetItem* pItem)
 
         if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
 
     } else {
@@ -7441,6 +7480,26 @@ void dlgTriggerEditor::slot_aliasSelected(QTreeWidgetItem* pItem)
 
         if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
 
     } else {
@@ -7489,6 +7548,26 @@ void dlgTriggerEditor::slot_keySelected(QTreeWidgetItem* pItem)
 
         if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
     } else {
         // No details to show - as will be the case if the top item (ID = 0) is
@@ -7897,6 +7976,26 @@ void dlgTriggerEditor::slot_actionSelected(QTreeWidgetItem* pItem)
 
         if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
     } else {
         // On root of treewidget_actions: - show help message instead
@@ -7982,6 +8081,26 @@ void dlgTriggerEditor::slot_scriptsSelected(QTreeWidgetItem* pItem)
                            "possibly by another script. The error was:%2%3").arg(qsl("<br>"), error.value()));
         } else if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
 
     } else {
@@ -8036,6 +8155,26 @@ void dlgTriggerEditor::slot_timerSelected(QTreeWidgetItem* pItem)
 
         if (!pT->state()) {
             showError(pT->getError());
+        } else {
+            // Show package warning if this item belongs to a package
+            QString packageName = pT->packageName(pT);
+            if (!packageName.isEmpty()) {
+                // Update accessibility description for screen readers (appears after item name)
+                QString currentDesc = pItem->data(0, Qt::AccessibleDescriptionRole).toString();
+                updatePackageItemAccessibility(pItem, currentDesc);
+
+                // Show visual warning banner (without screen reader announcement to avoid spam)
+                //: Package item warning banner shown in trigger editor when selecting package items
+                showWarning(tr("This item is part of a package. To best preserve your changes, copy this item before editing as package upgrades may overwrite modifications."), false);
+
+                // Announce full educational message only on first package item encountered
+                static bool firstPackageAnnounced = false;
+                if (!firstPackageAnnounced) {
+                    //: First-time educational message for screen reader users about package items
+                    mudlet::self()->announce(tr("Package item. Copy before editing to preserve changes."));
+                    firstPackageAnnounced = true;
+                }
+            }
         }
     } else {
         // No details to show - as will be the case if the top item (ID = 0) is
@@ -9489,7 +9628,7 @@ void dlgTriggerEditor::showError(const QString& text)
     }
 }
 
-void dlgTriggerEditor::showWarning(const QString& text)
+void dlgTriggerEditor::showWarning(const QString& text, bool announce)
 {
     mpSystemMessageArea->notificationAreaIconLabelInformation->hide();
     mpSystemMessageArea->notificationAreaIconLabelError->hide();
@@ -9502,7 +9641,7 @@ void dlgTriggerEditor::showWarning(const QString& text)
     disconnect(mpSystemMessageArea->messageAreaCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::slot_bannerDismissClicked);
     connect(mpSystemMessageArea->messageAreaCloseButton, &QAbstractButton::clicked, this, &dlgTriggerEditor::hideSystemMessageArea);
 
-    if (!mpHost->mIsProfileLoadingSequence) {
+    if (!mpHost->mIsProfileLoadingSequence && announce) {
         mudlet::self()->announce(text);
     }
 }
